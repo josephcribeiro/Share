@@ -1318,6 +1318,70 @@ function coletarDados() {
   return { domicilio, moradores, timestamp: new Date().toLocaleString('pt-BR') };
 }
 
+// ─── JSONP ───
+function jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timeout'));
+    }, 30000);
+
+    window[cbName] = (data) => {
+      cleanup();
+      resolve(data);
+    };
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    params.callback = cbName;
+    const qs = Object.entries(params)
+      .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : v))
+      .join('&');
+
+    script.src = APPS_SCRIPT_URL + '?' + qs;
+    script.onerror = () => { cleanup(); reject(new Error('Script error')); };
+    document.head.appendChild(script);
+  });
+}
+
+// ─── ENVIAR PARA APPS SCRIPT ───
+async function enviarCadastro() {
+  if (!validarMoradorAtivo()) return;
+  document.getElementById('loading').classList.add('show');
+
+  const dados = coletarDados();
+
+  try {
+    // Etapa 1: salvar cadastro
+    const res1 = await jsonp({ acao: 'cadastro', dados: dados });
+    if (res1.status !== 'ok') throw new Error(res1.message || 'Erro ao salvar cadastro');
+
+    const id = res1.id;
+
+    // Etapa 2: enviar comprovante
+    const arqInput = document.getElementById('comprovante');
+    if (arqInput.files[0]) {
+      const comprovante = await lerArquivoBase64(arqInput.files[0]);
+      const res2 = await jsonp({ acao: 'comprovante', dados: { id, comprovante } });
+      if (res2.status !== 'ok') console.warn('Aviso comprovante:', res2.message);
+    }
+
+    mostrarSucesso(dados);
+
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao enviar. Tente novamente.');
+  } finally {
+    document.getElementById('loading').classList.remove('show');
+  }
+}
+
 // ─── UPLOAD COMPROVANTE ───
 function onArquivoSelecionado(input) {
   const file = input.files[0];
@@ -1352,52 +1416,7 @@ function lerArquivoBase64(file) {
   });
 }
 
-// ─── ENVIAR PARA APPS SCRIPT ───
-async function enviarCadastro() {
-  if (!validarMoradorAtivo()) return;
 
-  document.getElementById('loading').classList.add('show');
-
-  const dados = coletarDados();
-
-  try {
-    // ── ETAPA 1: envia os dados do formulário ──
-    dados.tipo = 'cadastro';
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: JSON.stringify(dados)
-    });
-
-    // Gera o mesmo ID que o script vai gerar
-    // (o script retorna o ID mas no-cors não deixa ler — então geramos aqui também)
-    const id = 'CAD-' + Date.now().toString(36).toUpperCase();
-    dados.id = id;
-
-    // ── ETAPA 2: envia o comprovante separadamente ──
-    const arqInput = document.getElementById('comprovante');
-    if (arqInput.files[0]) {
-      const comprovante = await lerArquivoBase64(arqInput.files[0]);
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({
-          tipo: 'comprovante',
-          id: id,
-          comprovante: comprovante
-        })
-      });
-    }
-
-    mostrarSucesso(dados);
-
-  } catch (err) {
-    console.error(err);
-    showToast('Erro ao enviar. Tente novamente.');
-  } finally {
-    document.getElementById('loading').classList.remove('show');
-  }
-}
 
 function mostrarSucesso(dados) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
