@@ -743,7 +743,7 @@
         Salvar contato do Agente de Saúde
       </a>
       <div id="summaryContent"></div>
-      <button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="novoCadastro()">Novo cadastro</button>
+      <button class="btn" style="margin-top:12px;width:100%" onclick="novoCadastro()">Novo cadastro</button>
     </div>
 
   </div><!-- /form-body -->
@@ -1360,19 +1360,37 @@ async function enviarCadastro() {
 
   const dados = coletarDados();
 
-  // Anexar comprovante em base64
-  const arqInput = document.getElementById('comprovante');
-  if (arqInput.files[0]) {
-    dados.comprovante = await lerArquivoBase64(arqInput.files[0]);
-  }
-
   try {
+    // ── ETAPA 1: envia os dados do formulário ──
+    dados.tipo = 'cadastro';
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       body: JSON.stringify(dados)
     });
+
+    // Gera o mesmo ID que o script vai gerar
+    // (o script retorna o ID mas no-cors não deixa ler — então geramos aqui também)
+    const id = 'CAD-' + Date.now().toString(36).toUpperCase();
+    dados.id = id;
+
+    // ── ETAPA 2: envia o comprovante separadamente ──
+    const arqInput = document.getElementById('comprovante');
+    if (arqInput.files[0]) {
+      const comprovante = await lerArquivoBase64(arqInput.files[0]);
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+          tipo: 'comprovante',
+          id: id,
+          comprovante: comprovante
+        })
+      });
+    }
+
     mostrarSucesso(dados);
+
   } catch (err) {
     console.error(err);
     showToast('Erro ao enviar. Tente novamente.');
