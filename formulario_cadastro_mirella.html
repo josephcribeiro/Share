@@ -1247,35 +1247,36 @@ function coletarDados() {
   return { domicilio, moradores, timestamp: new Date().toLocaleString('pt-BR') };
 }
 
-// ─── JSONP ───
-function jsonp(params) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'cb_' + Math.random().toString(36).slice(2);
-    const script = document.createElement('script');
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error('Timeout'));
-    }, 30000);
+// ─── JSONP com resolução de redirecionamento ───
+// O Google Apps Script redireciona para googleusercontent.com e perde os parâmetros.
+// Solução: primeiro faz um GET simples para descobrir a URL final redirecionada,
+// depois usa essa URL diretamente com os parâmetros.
 
-    window[cbName] = (data) => {
-      cleanup();
-      resolve(data);
+let _urlFinal = null;
+
+async function getUrlFinal() {
+  if (_urlFinal) return _urlFinal;
+  // Abre um iframe oculto para capturar o redirecionamento
+  return new Promise((resolve) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.onload = () => {
+      try {
+        // Tenta pegar a URL do iframe após redirecionamento
+        _urlFinal = iframe.contentWindow.location.href.split('?')[0];
+      } catch(e) {
+        // Cross-origin — pega da src do iframe após redirecionamento
+        _urlFinal = APPS_SCRIPT_URL;
+      }
+      document.body.removeChild(iframe);
+      resolve(_urlFinal);
     };
-
-    function cleanup() {
-      clearTimeout(timeout);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
-    params.callback = cbName;
-    const qs = Object.entries(params)
-      .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : v))
-      .join('&');
-
-    script.src = APPS_SCRIPT_URL + '?' + qs;
-    script.onerror = () => { cleanup(); reject(new Error('Script error')); };
-    document.head.appendChild(script);
+    iframe.onerror = () => {
+      document.body.removeChild(iframe);
+      resolve(APPS_SCRIPT_URL);
+    };
+    iframe.src = APPS_SCRIPT_URL + '?_ping=1';
+    document.body.appendChild(iframe);
   });
 }
 
@@ -1287,15 +1288,12 @@ async function enviarCadastro() {
   const dados = coletarDados();
 
   try {
-    // Etapa 1: salvar cadastro
-    const res1 = await jsonp({ acao: 'cadastro', dados: dados });
-    if (res1.status !== 'ok') throw new Error(res1.message || 'Erro ao salvar cadastro');
-
-    const id = res1.id;
-
-
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(dados)
+    });
     mostrarSucesso(dados);
-
   } catch (err) {
     console.error(err);
     showToast('Erro ao enviar. Tente novamente.');
