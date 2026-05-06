@@ -166,6 +166,31 @@
   /* Toast */
   .toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--ink); color:white; padding:0.75rem 1.5rem; border-radius:999px; font-size:0.85rem; font-weight:500; z-index:200; transition:transform 0.3s ease; pointer-events:none; white-space:nowrap; }
   .toast.show { transform:translateX(-50%) translateY(0); }
+
+  /* Install banner */
+  .install-banner { display:none; position:fixed; bottom:1.25rem; left:50%; transform:translateX(-50%); z-index:150; background:var(--ink); color:white; border-radius:16px; padding:0.9rem 1.25rem; box-shadow:0 8px 32px rgba(0,0,0,0.25); align-items:center; gap:0.85rem; max-width:360px; width:calc(100% - 2rem); animation:slideUp 0.35s ease; }
+  .install-banner.show { display:flex; }
+  @keyframes slideUp { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  .install-banner-icon { font-size:1.6rem; flex-shrink:0; }
+  .install-banner-text { flex:1; }
+  .install-banner-text strong { font-size:0.9rem; display:block; margin-bottom:0.1rem; }
+  .install-banner-text span { font-size:0.78rem; color:rgba(255,255,255,0.6); }
+  .install-banner-btn { background:var(--accent); color:white; border:none; border-radius:10px; padding:0.55rem 1rem; font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  .install-banner-btn:hover { opacity:0.88; }
+  .install-banner-close { background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; font-size:1rem; padding:0.2rem; flex-shrink:0; line-height:1; }
+  .install-banner-close:hover { color:white; }
+
+  /* Logo upload */
+  .logo-preview-wrap { display:flex; align-items:center; gap:1.25rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+  .logo-preview-box { width:80px; height:80px; border-radius:16px; border:2px dashed var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--bg); flex-shrink:0; }
+  .logo-preview-box img { width:100%; height:100%; object-fit:cover; }
+  .logo-preview-box .logo-placeholder { font-size:2rem; }
+  .logo-upload-info { flex:1; }
+  .logo-upload-info p { font-size:0.82rem; color:var(--ink-soft); margin-bottom:0.6rem; line-height:1.5; }
+  .file-input-wrap { position:relative; display:inline-block; }
+  .file-input-wrap input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; }
+  .file-input-btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 1rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.85rem; font-weight:500; color:var(--ink-soft); cursor:pointer; background:var(--surface); transition:all 0.15s; }
+  .file-input-btn:hover { border-color:var(--accent); color:var(--accent); }
   /* ── MOBILE ── */
   @media (max-width: 600px) {
     header { padding: 1.5rem 1rem 1.25rem; }
@@ -261,6 +286,7 @@
     </div>
     <div class="stabs">
       <div class="stab active" data-tab="colors">🎨 Cores</div>
+      <div class="stab" data-tab="logo">🖼️ Logo</div>
       <div class="stab" data-tab="records">📋 Endereços</div>
       <div class="stab" data-tab="teams">🏷️ Equipes</div>
     </div>
@@ -284,6 +310,30 @@
       <div class="btn-row">
         <button class="btn-primary" id="applyColorsBtn">Aplicar cores</button>
         <button class="btn-sec" id="resetColorsBtn">Restaurar padrão</button>
+      </div>
+    </div>
+
+    <!-- LOGO -->
+    <div class="stab-body" id="tab-logo">
+      <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.25rem;">Personalize o ícone do app e o favicon exibido no navegador.</p>
+
+      <p class="section-label" style="margin-top:0;">Ícone do App (logo)</p>
+      <div class="logo-preview-wrap">
+        <div class="logo-preview-box" id="logoPreviewBox">
+          <span class="logo-placeholder">📍</span>
+        </div>
+        <div class="logo-upload-info">
+          <p>Faça upload de uma imagem quadrada (PNG ou JPG).<br>Será usada como ícone do app e favicon.</p>
+          <div class="file-input-wrap">
+            <span class="file-input-btn">📁 Escolher imagem</span>
+            <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="applyLogoBtn">Aplicar logo</button>
+        <button class="btn-sec" id="resetLogoBtn">Remover logo</button>
       </div>
     </div>
 
@@ -329,6 +379,17 @@
       <button class="btn-sec" id="cancelFormBtn">Cancelar</button>
     </div>
   </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner" id="installBanner">
+  <div class="install-banner-icon">📲</div>
+  <div class="install-banner-text">
+    <strong>Instalar app</strong>
+    <span>Adicione à tela inicial para usar offline</span>
+  </div>
+  <button class="install-banner-btn" id="installBtn">Instalar</button>
+  <button class="install-banner-close" id="dismissBanner" title="Fechar">✕</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -718,7 +779,125 @@ function renderTeamsView(){
 // ── init ──
 loadData();
 applyColors(loadColors());
+loadLogo();
 render();
+
+// ── PWA Install Banner ──
+let deferredPrompt = null;
+const banner = document.getElementById('installBanner');
+
+function isInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true
+    || document.referrer.includes('android-app://');
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!isInstalled() && !sessionStorage.getItem('installDismissed')) {
+    setTimeout(() => banner.classList.add('show'), 1500);
+  }
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.classList.remove('show');
+    if (outcome === 'accepted') toast('✅ App instalado com sucesso!');
+  } else {
+    // iOS Safari fallback
+    toast('No Safari: toque em Compartilhar → Adicionar à Tela de Início');
+    banner.classList.remove('show');
+  }
+});
+
+document.getElementById('dismissBanner').addEventListener('click', () => {
+  banner.classList.remove('show');
+  sessionStorage.setItem('installDismissed', '1');
+});
+
+window.addEventListener('appinstalled', () => {
+  banner.classList.remove('show');
+  toast('✅ App instalado!');
+});
+
+// ── Logo ──
+const LOGO_KEY = 'microareas_logo_v1';
+
+function loadLogo() {
+  const saved = localStorage.getItem(LOGO_KEY);
+  if (saved) applyLogo(saved);
+}
+
+function applyLogo(dataUrl) {
+  // Header logo
+  let logoImg = document.getElementById('headerLogo');
+  if (!logoImg) {
+    logoImg = document.createElement('img');
+    logoImg.id = 'headerLogo';
+    logoImg.style.cssText = 'width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;';
+    const headerText = document.querySelector('.header-inner > div');
+    headerText.parentNode.insertBefore(logoImg, headerText);
+  }
+  logoImg.src = dataUrl;
+
+  // Favicon
+  let favicon = document.querySelector("link[rel~='icon']");
+  if (!favicon) { favicon = document.createElement('link'); favicon.rel = 'icon'; document.head.appendChild(favicon); }
+  favicon.href = dataUrl;
+
+  // Apple touch icon
+  let apple = document.querySelector("link[rel='apple-touch-icon']");
+  if (apple) apple.href = dataUrl;
+
+  // Preview in settings
+  const box = document.getElementById('logoPreviewBox');
+  if (box) box.innerHTML = `<img src="${dataUrl}" alt="logo">`;
+}
+
+function removeLogo() {
+  localStorage.removeItem(LOGO_KEY);
+  const logoImg = document.getElementById('headerLogo');
+  if (logoImg) logoImg.remove();
+  const box = document.getElementById('logoPreviewBox');
+  if (box) box.innerHTML = `<span class="logo-placeholder">📍</span>`;
+  // Reset favicon
+  let favicon = document.querySelector("link[rel~='icon']");
+  if (favicon) favicon.href = 'icon-192.png';
+  let apple = document.querySelector("link[rel='apple-touch-icon']");
+  if (apple) apple.href = 'icon-192.png';
+}
+
+document.getElementById('logoFileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    applyLogo(ev.target.result);
+    toast('🖼️ Logo carregada — clique em Aplicar para salvar');
+    document.getElementById('applyLogoBtn').dataset.pending = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById('applyLogoBtn').addEventListener('click', () => {
+  const pending = document.getElementById('applyLogoBtn').dataset.pending;
+  if (pending) {
+    localStorage.setItem(LOGO_KEY, pending);
+    toast('✅ Logo aplicada e salva!');
+    delete document.getElementById('applyLogoBtn').dataset.pending;
+  } else {
+    toast('⚠️ Escolha uma imagem primeiro');
+  }
+});
+
+document.getElementById('resetLogoBtn').addEventListener('click', () => {
+  removeLogo();
+  toast('🔄 Logo removida');
+});
 
 // ── PWA Service Worker ──
 if ('serviceWorker' in navigator) {
