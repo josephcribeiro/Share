@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Micro Áreas – Busca por Endereço</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MicroÁreas">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0ede8;
+    --surface: #ffffff;
+    --ink: #1a1a1a;
+    --ink-soft: #5a5a5a;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --border: #e2ddd8;
+    --tag-saboya: #fef3c7;
+    --tag-saboya-ink: #92400e;
+    --tag-daltro: #fce7f3;
+    --tag-daltro-ink: #9d174d;
+    --tag-guamiranga: #d1fae5;
+    --tag-guamiranga-ink: #065f46;
+    --tag-vilamaria: #ede9fe;
+    --tag-vilamaria-ink: #5b21b6;
+    --shadow: 0 4px 24px rgba(0,0,0,0.07);
+    --radius: 12px;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+  header {
+    background: var(--ink); color: white;
+    padding: 2.5rem 2rem 2rem; position: relative; overflow: hidden;
+  }
+  header::after { content:''; position:absolute; right:-60px; top:-60px; width:280px; height:280px; border-radius:50%; background:rgba(37,99,235,0.25); pointer-events:none; }
+  header::before { content:''; position:absolute; right:60px; bottom:-80px; width:180px; height:180px; border-radius:50%; background:rgba(37,99,235,0.12); pointer-events:none; }
+  .header-inner { max-width:860px; margin:0 auto; position:relative; z-index:1; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+  .header-label { font-size:0.7rem; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.5); margin-bottom:0.5rem; }
+  h1 { font-family:'Syne',sans-serif; font-size:clamp(1.8rem,4vw,2.8rem); font-weight:800; line-height:1.1; letter-spacing:-0.03em; }
+  h1 span { color:#60a5fa; }
+  .header-sub { margin-top:0.6rem; font-size:0.9rem; color:rgba(255,255,255,0.55); font-weight:300; }
+  .header-credit { margin-top:0.3rem; font-size:0.72rem; color:rgba(255,255,255,0.3); font-weight:300; font-style:italic; }
+  .settings-btn { background:rgba(255,255,255,0.1); border:1.5px solid rgba(255,255,255,0.2); color:white; border-radius:10px; padding:0.5rem 0.6rem; cursor:pointer; font-size:1.1rem; font-family:'DM Sans',sans-serif; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; margin-top:0.3rem; line-height:1; }
+  .settings-btn:hover { background:rgba(255,255,255,0.2); }
+
+  .main { max-width:860px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+
+  .search-wrap { position:relative; margin-bottom:1.5rem; }
+  .search-icon { position:absolute; left:1.1rem; top:50%; transform:translateY(-50%); pointer-events:none; color:var(--ink-soft); }
+  #search { width:100%; padding:1rem 3.5rem 1rem 3rem; font-family:'DM Sans',sans-serif; font-size:1rem; border:2px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--ink); outline:none; transition:border-color 0.2s,box-shadow 0.2s; box-shadow:var(--shadow); }
+  #search:focus { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-light); }
+  #search::placeholder { color:#aaa; font-weight:300; }
+  .clear-btn { position:absolute; right:1rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#aaa; font-size:1.1rem; padding:0.2rem; display:none; line-height:1; }
+  .clear-btn:hover { color:var(--ink); }
+
+  .stats-bar { font-size:0.82rem; color:var(--ink-soft); margin-bottom:1.25rem; }
+  .stats-bar strong { color:var(--ink); font-weight:600; }
+  .pill-filters { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .pill { padding:0.35rem 0.85rem; border-radius:999px; font-size:0.78rem; font-weight:500; cursor:pointer; border:1.5px solid var(--border); background:var(--surface); color:var(--ink-soft); transition:all 0.15s; user-select:none; }
+  .pill:hover,.pill.active { border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+  .pill.all.active { background:var(--ink); color:white; border-color:var(--ink); }
+
+  .results { display:flex; flex-direction:column; gap:0.6rem; }
+  .card { background:var(--surface); border-radius:var(--radius); border:1.5px solid var(--border); padding:1rem 1.25rem; display:grid; grid-template-columns:1fr auto; gap:0.5rem 1rem; align-items:start; transition:box-shadow 0.15s,border-color 0.15s,transform 0.15s; animation:fadeIn 0.18s ease both; }
+  .card:hover { box-shadow:var(--shadow); border-color:var(--accent); transform:translateY(-1px); }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .card-address { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; line-height:1.3; color:var(--ink); grid-column:1/-1; }
+  .card-address mark { background:#fde68a; color:inherit; border-radius:3px; padding:0 2px; }
+  .card-meta { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+  .tag { font-size:0.72rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; padding:0.2rem 0.6rem; border-radius:6px; }
+  .tag-equipe-SABOYA     { background:var(--tag-saboya);     color:var(--tag-saboya-ink); }
+  .tag-equipe-DALTRO     { background:var(--tag-daltro);     color:var(--tag-daltro-ink); }
+  .tag-equipe-GUAMIRANGA { background:var(--tag-guamiranga); color:var(--tag-guamiranga-ink); }
+  .tag-equipe-VILAMARIA  { background:var(--tag-vilamaria);  color:var(--tag-vilamaria-ink); }
+  .agent-chip { font-size:0.8rem; font-weight:500; color:var(--ink-soft); display:flex; align-items:center; gap:0.3rem; }
+  .agent-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .micro-badge { font-size:0.72rem; color:#888; font-weight:400; margin-left:auto; white-space:nowrap; }
+  .empty { text-align:center; padding:3rem 1rem; color:var(--ink-soft); }
+  .empty-icon { font-size:2.5rem; margin-bottom:0.75rem; }
+  .empty h3 { font-family:'Syne',sans-serif; font-weight:700; margin-bottom:0.3rem; }
+  .empty p { font-size:0.85rem; font-weight:300; }
+
+  /* MODALS */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center; padding:1rem; }
+  .overlay.open { display:flex; }
+  @keyframes popIn { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
+
+  /* LOGIN */
+  .login-box { background:var(--surface); border-radius:16px; padding:2.5rem 2rem; width:100%; max-width:360px; box-shadow:0 24px 60px rgba(0,0,0,0.2); animation:popIn 0.2s ease; }
+  .login-box h2 { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; margin-bottom:0.3rem; }
+  .login-box p { font-size:0.85rem; color:var(--ink-soft); margin-bottom:1.5rem; }
+  .login-box input { width:100%; padding:0.8rem 1rem; font-family:'DM Sans',sans-serif; font-size:1rem; border:2px solid var(--border); border-radius:10px; outline:none; margin-bottom:1rem; transition:border-color 0.2s; }
+  .login-box input:focus { border-color:var(--accent); }
+  .login-error { font-size:0.8rem; color:#dc2626; margin-bottom:0.8rem; display:none; }
+  .btn-primary { padding:0.85rem 1.5rem; background:var(--accent); color:white; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:600; cursor:pointer; transition:opacity 0.2s; }
+  .btn-primary:hover { opacity:0.88; }
+  .btn-primary.full { width:100%; }
+  .btn-cancel { width:100%; padding:0.7rem; background:none; border:none; color:var(--ink-soft); font-family:'DM Sans',sans-serif; font-size:0.85rem; cursor:pointer; margin-top:0.5rem; }
+  .btn-cancel:hover { color:var(--ink); }
+
+  /* SETTINGS PANEL */
+  .settings-panel { background:var(--surface); border-radius:16px; width:100%; max-width:720px; max-height:90vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,0.2); animation:popIn 0.2s ease; }
+  .settings-hdr { position:sticky; top:0; background:var(--surface); border-bottom:1.5px solid var(--border); padding:1.25rem 1.5rem; display:flex; align-items:center; justify-content:space-between; z-index:10; }
+  .settings-hdr h2 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; }
+  .close-btn { background:none; border:none; cursor:pointer; color:var(--ink-soft); font-size:1.3rem; line-height:1; }
+  .close-btn:hover { color:var(--ink); }
+  .stabs { display:flex; border-bottom:1.5px solid var(--border); padding:0 1.5rem; overflow-x:auto; }
+  .stab { padding:0.75rem 1rem; font-size:0.85rem; font-weight:500; cursor:pointer; border-bottom:2.5px solid transparent; margin-bottom:-1.5px; color:var(--ink-soft); transition:all 0.15s; white-space:nowrap; }
+  .stab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .stab-body { display:none; padding:1.5rem; }
+  .stab-body.active { display:block; }
+
+  /* Colors */
+  .color-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .color-row { display:flex; flex-direction:column; gap:0.4rem; }
+  .color-row label { font-size:0.8rem; font-weight:500; color:var(--ink-soft); }
+  .color-row input[type=color] { width:100%; height:42px; border:1.5px solid var(--border); border-radius:8px; cursor:pointer; padding:2px 4px; }
+  .section-label { font-size:0.8rem; color:var(--ink-soft); margin:1.25rem 0 0.75rem; font-weight:500; }
+  .btn-row { display:flex; gap:0.5rem; margin-top:1.25rem; flex-wrap:wrap; }
+  .btn-sec { padding:0.75rem 1.25rem; background:none; border:1.5px solid var(--border); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:0.9rem; cursor:pointer; color:var(--ink-soft); }
+  .btn-sec:hover { border-color:var(--ink); color:var(--ink); }
+
+  /* Records */
+  .rec-toolbar { display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; align-items:center; }
+  .rec-search-input { flex:1; min-width:150px; padding:0.6rem 0.9rem; border:1.5px solid var(--border); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.88rem; outline:none; }
+  .rec-search-input:focus { border-color:var(--accent); }
+  .btn-add { padding:0.6rem 1.1rem; background:var(--accent); color:white; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .btn-add:hover { opacity:0.88; }
+  .rec-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  .rec-table th { text-align:left; padding:0.5rem 0.6rem; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); border-bottom:1.5px solid var(--border); }
+  .rec-table td { padding:0.55rem 0.6rem; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .rec-table tr:last-child td { border-bottom:none; }
+  .rec-table tbody tr:hover td { background:#f8f8f6; }
+  .act-btns { display:flex; gap:0.3rem; }
+  .btn-edit,.btn-del { border:none; cursor:pointer; border-radius:6px; padding:0.25rem 0.55rem; font-size:0.75rem; font-weight:500; }
+  .btn-edit { background:#dbeafe; color:#1d4ed8; }
+  .btn-edit:hover { background:#bfdbfe; }
+  .btn-del { background:#fee2e2; color:#dc2626; }
+  .btn-del:hover { background:#fecaca; }
+
+  /* Form */
+  .form-box { background:var(--surface); border-radius:16px; padding:2rem; width:100%; max-width:440px; box-shadow:0 24px 60px rgba(0,0,0,0.25); animation:popIn 0.2s ease; }
+  .form-box h3 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; margin-bottom:1.25rem; }
+  .form-field { display:flex; flex-direction:column; gap:0.35rem; margin-bottom:1rem; }
+  .form-field label { font-size:0.8rem; font-weight:500; color:var(--ink-soft); }
+  .form-field input,.form-field select { padding:0.7rem 0.9rem; border:1.5px solid var(--border); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.9rem; outline:none; background:var(--surface); color:var(--ink); }
+  .form-field input:focus,.form-field select:focus { border-color:var(--accent); }
+  .form-actions { display:flex; gap:0.75rem; margin-top:1.25rem; }
+
+  /* Teams */
+  .team-block { margin-bottom:1.25rem; }
+  .team-block-header { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.6rem; }
+  .agents-chips { display:flex; flex-wrap:wrap; gap:0.4rem; }
+  .agent-tag { background:var(--bg); border:1.5px solid var(--border); border-radius:8px; padding:0.25rem 0.7rem; font-size:0.78rem; font-weight:500; }
+  .agent-count { color:var(--ink-soft); font-weight:300; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--ink); color:white; padding:0.75rem 1.5rem; border-radius:999px; font-size:0.85rem; font-weight:500; z-index:200; transition:transform 0.3s ease; pointer-events:none; white-space:nowrap; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    header { padding: 1.5rem 1rem 1.25rem; }
+    h1 { font-size: 2rem; }
+    .header-sub { font-size: 0.82rem; }
+    .main { padding: 1.25rem 1rem 3rem; }
+
+    .card { grid-template-columns: 1fr; gap: 0.4rem; padding: 0.85rem 1rem; }
+    .micro-badge { margin-left: 0; }
+
+    .pill { font-size: 0.72rem; padding: 0.28rem 0.65rem; }
+
+    .overlay { padding: 0.75rem; align-items: flex-end; }
+    .login-box { border-radius: 16px 16px 12px 12px; padding: 2rem 1.25rem 1.5rem; }
+    .form-box { border-radius: 16px 16px 12px 12px; padding: 1.5rem 1.25rem; max-height: 92vh; overflow-y: auto; }
+    .form-actions { flex-direction: column; }
+    .form-actions .btn-sec { width: 100%; text-align: center; }
+
+    .settings-panel { border-radius: 16px 16px 0 0; max-height: 92vh; margin-top: auto; }
+    .settings-panel .overlay { align-items: flex-end; }
+
+    .color-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .btn-row { flex-direction: column; }
+    .btn-row .btn-primary, .btn-row .btn-sec { width: 100%; text-align: center; }
+
+    .rec-toolbar { flex-direction: column; align-items: stretch; }
+    .rec-search-input { width: 100%; }
+    .btn-add { width: 100%; text-align: center; justify-content: center; }
+
+    .rec-table th:nth-child(3),
+    .rec-table td:nth-child(3) { display: none; }
+
+    .stab { padding: 0.65rem 0.75rem; font-size: 0.8rem; }
+
+    .toast { font-size: 0.8rem; padding: 0.65rem 1.25rem; bottom: 1.25rem; max-width: 88vw; white-space: normal; text-align: center; }
+  }
+  /* ── MOBILE – settings sheet from bottom ── */
+  @media (max-width: 600px) {
+    #settingsOverlay { align-items: flex-end; }
+    #formOverlay     { align-items: flex-end; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-label">Sistema de Consulta</div>
+      <h1>Micro<span>Áreas</span></h1>
+      <p class="header-sub">Busque por endereço, equipe, micro área ou agente</p>
+      <p class="header-credit">criado por Joseph Ribeiro</p>
+    </div>
+    <button class="settings-btn" id="openSettingsBtn" title="Configurações">⚙️</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="search-wrap">
+    <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="search" type="text" placeholder="Digite endereço, equipe, micro área ou agente…" autocomplete="off" spellcheck="false">
+    <button class="clear-btn" id="clearBtn">✕</button>
+  </div>
+  <div class="pill-filters" id="pillFilters">
+    <span class="pill all active" data-equipe="">Todas as equipes</span>
+    <span class="pill" data-equipe="SABOYA">Saboya</span>
+    <span class="pill" data-equipe="DALTRO">Daltro</span>
+    <span class="pill" data-equipe="GUAMIRANGA">Guamiranga</span>
+    <span class="pill" data-equipe="VILA MARIA">Vila Maria</span>
+  </div>
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="results" id="results"></div>
+</div>
+
+<!-- LOGIN -->
+<div class="overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>🔒 Área Restrita</h2>
+    <p>Digite a senha para acessar as configurações.</p>
+    <input type="password" id="pwdInput" placeholder="Senha">
+    <div class="login-error" id="loginError">Senha incorreta. Tente novamente.</div>
+    <button class="btn-primary full" id="loginBtn">Entrar</button>
+    <button class="btn-cancel" id="cancelLoginBtn">Cancelar</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="overlay" id="settingsOverlay">
+  <div class="settings-panel">
+    <div class="settings-hdr">
+      <h2>⚙️ Configurações</h2>
+      <button class="close-btn" id="closeSettingsBtn">✕</button>
+    </div>
+    <div class="stabs">
+      <div class="stab active" data-tab="colors">🎨 Cores</div>
+      <div class="stab" data-tab="records">📋 Endereços</div>
+      <div class="stab" data-tab="teams">🏷️ Equipes</div>
+    </div>
+
+    <!-- COLORS -->
+    <div class="stab-body active" id="tab-colors">
+      <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.25rem;">Personalize as cores do sistema. Salvas automaticamente no navegador.</p>
+      <div class="color-grid">
+        <div class="color-row"><label>Cor de fundo</label><input type="color" id="c-bg"></div>
+        <div class="color-row"><label>Destaque (accent)</label><input type="color" id="c-accent"></div>
+        <div class="color-row"><label>Header</label><input type="color" id="c-ink"></div>
+        <div class="color-row"><label>Cards</label><input type="color" id="c-surface"></div>
+      </div>
+      <p class="section-label">Cores das etiquetas de equipe:</p>
+      <div class="color-grid">
+        <div class="color-row"><label>Saboya</label><input type="color" id="c-saboya"></div>
+        <div class="color-row"><label>Daltro</label><input type="color" id="c-daltro"></div>
+        <div class="color-row"><label>Guamiranga</label><input type="color" id="c-guamiranga"></div>
+        <div class="color-row"><label>Vila Maria</label><input type="color" id="c-vilamaria"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="applyColorsBtn">Aplicar cores</button>
+        <button class="btn-sec" id="resetColorsBtn">Restaurar padrão</button>
+      </div>
+    </div>
+
+    <!-- RECORDS -->
+    <div class="stab-body" id="tab-records">
+      <div class="rec-toolbar">
+        <input class="rec-search-input" type="text" id="recSearch" placeholder="Filtrar registros…">
+        <button class="btn-add" id="addRecBtn">＋ Novo registro</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="rec-table">
+          <thead><tr><th>Endereço</th><th>Equipe</th><th>Micro</th><th>Agente</th><th></th></tr></thead>
+          <tbody id="recBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TEAMS -->
+    <div class="stab-body" id="tab-teams">
+      <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.25rem;">Equipes e agentes cadastrados no sistema.</p>
+      <div id="teamsView"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="overlay" id="formOverlay">
+  <div class="form-box">
+    <h3 id="formTitle">Novo Registro</h3>
+    <div class="form-field"><label>Endereço</label><input type="text" id="fAddr" placeholder="Nome da rua ou endereço"></div>
+    <div class="form-field"><label>Equipe</label>
+      <select id="fEquipe">
+        <option value="SABOYA">SABOYA</option>
+        <option value="DALTRO">DALTRO</option>
+        <option value="GUAMIRANGA">GUAMIRANGA</option>
+        <option value="VILA MARIA">VILA MARIA</option>
+      </select>
+    </div>
+    <div class="form-field"><label>Micro Área</label><input type="text" id="fMicro" placeholder="Ex: MICRO 3"></div>
+    <div class="form-field"><label>Agente</label><input type="text" id="fAgent" placeholder="Nome do agente"></div>
+    <div class="form-actions">
+      <button class="btn-primary" id="saveRecBtn">Salvar</button>
+      <button class="btn-sec" id="cancelFormBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+//  ⚠️  TROQUE A SENHA AQUI antes de publicar:
+const ADMIN_PASSWORD = "SUA_SENHA_AQUI";
+// ════════════════════════════════════════════════
+
+let DATA = [
+  ["ADEMAR MANARINI","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["ADRIANA VARANDAS, 3405","SABOYA","MICRO 2","LARISSA"],
+  ["ALBERTO THOMAZZI","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["ALDO MALAGOLI","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["ALEMANHA","DALTRO","MICRO 6","REJANE"],
+  ["AMENDOIM","SABOYA","MICRO 1","LUCIENE"],
+  ["ANA CUSTODIO","GUAMIRANGA","MICRO 2","OZANA"],
+  ["ANÊMONA","SABOYA","MICRO 1","LUCIENE"],
+  ["ANTA","DALTRO","MICRO 1","BEATRIZ"],
+  ["ANTHERO MONTEIRO DE AZEVEDO","GUAMIRANGA","MICRO 4","TÂNIA"],
+  ["ARAPOTI","VILA MARIA","MICRO 4","ELAINE"],
+  ["ARNALDO NOGUEIRA","GUAMIRANGA","MICRO 2","OZANA"],
+  ["ARTUR DA TÁVOLA","DALTRO","MICRO 1","BEATRIZ"],
+  ["ÁUSTRIA","DALTRO","MICRO 6","REJANE"],
+  ["BÉLGICA","DALTRO","MICRO 3","ALEXANDRE"],
+  ["BENEDITO DE SOUZA","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["BERNARDO CID","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["BERNARDO JOSÉ DE OLIVEIRA","DALTRO","MICRO 3","ALEXANDRE"],
+  ["CAFURINGA","DALTRO","MICRO 4","ROGER"],
+  ["CAMPINA GRANDE","DALTRO","MICRO 5","DIOGO"],
+  ["CARLOS CASTILHO","DALTRO","MICRO 4","ROGER"],
+  ["CARLOS DELGADO CARVALHO (A PARTIR DA ROBERTO SERGIO OAZEM)","SABOYA","MICRO 5","LEARSI"],
+  ["CARLOS DELGADO DE CARVALHO","SABOYA","MICRO 3","EVELYN"],
+  ["CARLOS MONTEIRO","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["CARLOS PASSOS TAVEIRA","DALTRO","MICRO 3","ALEXANDRE"],
+  ["CARLOS ZEFIRO","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["CIRO FLÁVIO SALAZAR","VILA MARIA","MICRO 2","JULIANA"],
+  ["CONRADO PEREIRA","GUAMIRANGA","MICRO 2","OZANA"],
+  ["COSME ALVES NETO","DALTRO","MICRO 3","ALEXANDRE"],
+  ["CRISPIM DO AMARAL","VILA MARIA","MICRO 6","GABRIELLE"],
+  ["DARCY RIBEIRO","DALTRO","MICRO 1","BEATRIZ"],
+  ["DARIO DE PAULA COELHO","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["DENER","DALTRO","MICRO 4","ROGER"],
+  ["DEP. BOCAIÚVA CUNHA","DALTRO","MICRO 1","BEATRIZ"],
+  ["DEPUTADO PINHEIRO CHAGAS","GUAMIRANGA","MICRO 1","SAMARA"],
+  ["DESEMB. JOSÉ PELLINI","GUAMIRANGA","MICRO 1","SAMARA"],
+  ["DIDI","DALTRO","MICRO 4","ROGER"],
+  ["DINAMARCA","DALTRO","MICRO 6","REJANE"],
+  ["DIORAMA","SABOYA","MICRO 1","LUCIENE"],
+  ["DIRCEU ARCO VERDE","DALTRO","MICRO 5","DIOGO"],
+  ["DOS CISNES","SABOYA","MICRO 2","LARISSA"],
+  ["EDMAR MOREL","DALTRO","MICRO 4","ROGER"],
+  ["ELAINE RODRIGUES","GUAMIRANGA","MICRO 2","OZANA"],
+  ["EMBAIXADOR CAMILO DE OLIVEIRA","GUAMIRANGA","MICRO 1","SAMARA"],
+  ["ENTRADA 28","VILA MARIA","MICRO 4","ELAINE"],
+  ["ENTRADA 29","VILA MARIA","MICRO 4","ELAINE"],
+  ["ENTRADA 30","VILA MARIA","MICRO 4","ELAINE"],
+  ["ENTRADA 40","VILA MARIA","MICRO 6","GABRIELLE"],
+  ["ENTRADA 41","VILA MARIA","MICRO 6","GABRIELLE"],
+  ["ENTRADA 43","VILA MARIA","MICRO 4","ELAINE"],
+  ["ESCÓCIA","DALTRO","MICRO 3","ALEXANDRE"],
+  ["ESTR. DA POSSE","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["ESTR. DA POSSE - 25, 625, 665 685, 693, 695, 745, 775, 1505, 1671","VILA MARIA","MICRO 6","GABRIELLE"],
+  ["ESTR. DA POSSE - 657, 723, 735, 737, 741, 743, 747, 1859","VILA MARIA","MICRO 5","CRISTANO"],
+  ["ESTR. DA POSSE 3033 (BAIRRO MIRELA)","SABOYA","MICRO 6","JOSEPH"],
+  ["ESTR. DA POSSE 623 (AO LADO DO SALÃO DE FESTA)","SABOYA","MICRO 1","LUCIENE"],
+  ["ESTR. DA POSSE, 1032","DALTRO","MICRO 4","ROGER"],
+  ["ESTR. DA POSSE, 1050","DALTRO","MICRO 6","REJANE"],
+  ["ESTR. DA POSSE, 246","DALTRO","MICRO 2","CARLA"],
+  ["ESTR. DA POSSE, 248","DALTRO","MICRO 2","CARLA"],
+  ["ESTR. DA POSSE, 3000","DALTRO","MICRO 2","CARLA"],
+  ["ESTR. DA POSSE, SABOYA DE FIUZA (LOTES 62, 63 E 64)","SABOYA","MICRO 6","JOSEPH"],
+  ["ESTR. SERRA ALTA, 1260","DALTRO","MICRO 5","DIOGO"],
+  ["ESTRADA DA POSSE","GUAMIRANGA","MICRO 5","JULIANE"],
+  ["ESTRELA VELHA","SABOYA","MICRO 6","JOSEPH"],
+  ["FAROL DE SÃO TOMÉ","DALTRO","MICRO 5","DIOGO"],
+  ["FERNANDO SABOYA DE FIUZA","SABOYA","MICRO 5","LEARSI"],
+  ["FLAMINGO","SABOYA","MICRO 2","LARISSA"],
+  ["FLORÁLIA","SABOYA","MICRO 1","LUCIENE"],
+  ["FORMOSA DO OESTE","DALTRO","MICRO 5","DIOGO"],
+  ["FRANCELINO CLAUDELINO DE SOUZA","VILA MARIA","MICRO 5","CRISTANO"],
+  ["FRANCISCO FERNANDES DA CUNHA","GUAMIRANGA","MICRO 4","TÂNIA"],
+  ["FRONTEIRA DOS VALES","DALTRO","MICRO 5","DIOGO"],
+  ["GERALDO SILVA","DALTRO","MICRO 4","ROGER"],
+  ["GERGELIM","SABOYA","MICRO 6","JOSEPH"],
+  ["GILDA VIGO","DALTRO","MICRO 4","ROGER"],
+  ["GOIANORTE","DALTRO","MICRO 5","DIOGO"],
+  ["GRAMADINHO","DALTRO","MICRO 5","DIOGO"],
+  ["GUAPOREMA","SABOYA","MICRO 6","JOSEPH"],
+  ["GUARANI DAS MISSÕES","DALTRO","MICRO 5","DIOGO"],
+  ["HAMILTON FERREIRA","GUAMIRANGA","MICRO 4","TÂNIA"],
+  ["HÉLIO DE OLIVEIRA BARBOSA","VILA MARIA","MICRO 1","ROSANA"],
+  ["HENRIQUE CARDOSO DE MIRANDA","SABOYA","MICRO 6","JOSEPH"],
+  ["HOLANDA","DALTRO","MICRO 3","ALEXANDRE"],
+  ["HUNGRIA","DALTRO","MICRO 3","ALEXANDRE"],
+  ["IBIRAMA","SABOYA","MICRO 1","LUCIENE"],
+  ["ICORACI","VILA MARIA","MICRO 3","VANESSA"],
+  ["IGAPORÃ","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["INGLATERRA","DALTRO","MICRO 6","REJANE"],
+  ["IPATINGA","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["IPOMÉIA","VILA MARIA","MICRO 4","ELAINE"],
+  ["ITAMARAJU","DALTRO","MICRO 4","ROGER"],
+  ["ITANAGRA","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["ITARANTIM","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["ITUMBIARA","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["IVO BATISTA SUZANO","VILA MARIA","MICRO 2","JULIANA"],
+  ["JACINTHO DE MENDONÇA FILHO","VILA MARIA","MICRO 2","JULIANA"],
+  ["JACINTHO FIGUEIRA JUNIOR","GUAMIRANGA","MICRO 2","OZANA"],
+  ["JAGUATIRICA","DALTRO","MICRO 1","BEATRIZ"],
+  ["JAIME BARREIROS","SABOYA","MICRO 3","EVELYN"],
+  ["JAPERICA","VILA MARIA","MICRO 3","VANESSA"],
+  ["JOÃO BOLONINI","GUAMIRANGA","MICRO 4","TÂNIA"],
+  ["JOÃO BORGES FILHO","SABOYA","MICRO 4","DANIELE"],
+  ["JOEL MARTINS","DALTRO","MICRO 4","ROGER"],
+  ["JONAS AMANCIO","GUAMIRANGA","MICRO 4","TÂNIA"],
+  ["JORGE RAMOS DA CRUZ","DALTRO","MICRO 3","ALEXANDRE"],
+  ["JORN. MARIO MACHADO AMARAL","GUAMIRANGA","MICRO 2","OZANA"],
+  ["JORN. ROGÉRIO COELHO NETO","GUAMIRANGA","MICRO 2","OZANA"],
+  ["JOSE CARLOS REGO","GUAMIRANGA","MICRO 2","OZANA"],
+  ["JOSÉ DANTAS DE OLIVEIRA","DALTRO","MICRO 3","ALEXANDRE"],
+  ["JOSÉ GUILHERME LACORTE","GUAMIRANGA","MICRO 1","SAMARA"],
+  ["JOSÉ LUIZ NOVAES","GUAMIRANGA","MICRO 1","SAMARA"],
+  ["JOSÉ MARTINS PIRES","VILA MARIA","MICRO 2","JULIANA"],
+  ["JOSÉ MAXIMINIANO NETO","VILA MARIA","MICRO 5","CRISTANO"],
+  ["JOSÉ PORFÍRIO DE SOUZA","VILA MARIA","MICRO 5","CRISTANO"],
+  ["LAGARTO","DALTRO","MICRO 6","REJANE"],
+  ["LIDJA ZAMENHOF","VILA MARIA","MICRO 5","CRISTANO"],
+  ["LUIZ ALBERTO BAHIA","GUAMIRANGA","MICRO 2","OZANA"],
+  ["LUIZ CARLOS PALMEIRA","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["LUIZ DE BARROS","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["LUIZ MONTEZUMA","SABOYA","MICRO 4","DANIELE"],
+  ["MANOEL ANTÃO DE PAIVA","VILA MARIA","MICRO 5","CRISTANO"],
+  ["MANOEL CABRAL","VILA MARIA","MICRO 1","ROSANA"],
+  ["MANOEL CABRAL - LT: 1, 1N, 1 CASA 3; NUMERO: 3, 15L, 100","VILA MARIA","MICRO 2","JULIANA"],
+  ["MANOEL DE SOUZA GOMES","VILA MARIA","MICRO 2","JULIANA"],
+  ["MARCELO FROMER","VILA MARIA","MICRO 6","GABRIELLE"],
+  ["MARCOS UCHOA","GUAMIRANGA","MICRO 2","OZANA"],
+  ["MARIA DO CARMO CASTRO","GUAMIRANGA","MICRO 2","OZANA"],
+  ["MARIA DO CARMO CASTRO","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["MARTINHO DO ARO","VILA MARIA","MICRO 4","ELAINE"],
+  ["MAURO FERREIRA LEÃO","VILA MARIA","MICRO 1","ROSANA"],
+  ["MÉDICO ARTHUR CALVALCANTE JUNIOR","SABOYA","MICRO 3","EVELYN"],
+  ["MIÉCIO PEREIRA","SABOYA","MICRO 3","EVELYN"],
+  ["MIGUEL ARRAES","DALTRO","MICRO 1","BEATRIZ"],
+  ["MINISTRO CARLOS MEDEIROS","GUAMIRANGA","MICRO 5","JULIANE"],
+  ["MOACYR BARBOSA","DALTRO","MICRO 4","ROGER"],
+  ["MONTE LINDO","GUAMIRANGA","MICRO 2","OZANA"],
+  ["MULUNGU","VILA MARIA","MICRO 3","VANESSA"],
+  ["NATIVIDADE DA SERRA","DALTRO","MICRO 5","DIOGO"],
+  ["NICOLA ALBANO","DALTRO","MICRO 4","ROGER"],
+  ["NOVA VERONA","SABOYA","MICRO 5","LEARSI"],
+  ["OLEGÁRIO DA SILVA JORDÃO","VILA MARIA","MICRO 5","CRISTANO"],
+  ["ONÇA PINTADA","DALTRO","MICRO 6","REJANE"],
+  ["ORECO","DALTRO","MICRO 4","ROGER"],
+  ["ORLANDO DE OLIVEIRA DANTAS","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["ORLANDO GELIO","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["OSVALDO GOGLIANO","SABOYA","MICRO 1","LUCIENE"],
+  ["PADRE LEME LOPES","GUAMIRANGA","MICRO 5","JULIANE"],
+  ["PALMARES DO SUL","DALTRO","MICRO 5","DIOGO"],
+  ["PAULO ROBERTO MARQUES","VILA MARIA","MICRO 5","CRISTANO"],
+  ["PAULO SÉRGIO","SABOYA","MICRO 2","LARISSA"],
+  ["PAULO SILVA BARBOSA","DALTRO","MICRO 4","ROGER"],
+  ["PEDAÇO DA CARLOS DELGADO","SABOYA","MICRO 4","DANIELE"],
+  ["PINTOR CAMARGO FREIRE","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["PROF. DALTRO SANTOS","SABOYA","MICRO 6","JOSEPH"],
+  ["RITA LUIZA DA CONCEÇÃO","VILA MARIA","MICRO 1","ROSANA"],
+  ["ROBERTO SERGIO OAZEN","SABOYA","MICRO 5","LEARSI"],
+  ["RODRIGO ULISSES DE CARVALHO","SABOYA","MICRO 4","DANIELE"],
+  ["RONALDO DOS SANTOS","VILA MARIA","MICRO 2","JULIANA"],
+  ["RUA B","VILA MARIA","MICRO 6","GABRIELLE"],
+  ["SAMPAIO DE LACERDA","GUAMIRANGA","MICRO 6","NATALYA"],
+  ["SEBASTIÃO SEVERINO DA SILVA","GUAMIRANGA","MICRO 4","TÂNIA"],
+  ["SENADOR JOSE GUIOMARD","GUAMIRANGA","MICRO 5","JULIANE"],
+  ["SERGIO RANGEL BARBOSA","SABOYA","MICRO 5","LEARSI"],
+  ["SUIÇA","DALTRO","MICRO 6","REJANE"],
+  ["TAMANDUÁ BANDEIRA","DALTRO","MICRO 1","BEATRIZ"],
+  ["TARSILA DO AMARAL","SABOYA","MICRO 1","LUCIENE"],
+  ["TONINHO BAIANO","DALTRO","MICRO 4","ROGER"],
+  ["TUCURUÍ","VILA MARIA","MICRO 3","VANESSA"],
+  ["TUPARANDI","VILA MARIA","MICRO 3","VANESSA"],
+  ["ÚLTIMO DE CARVALHO","SABOYA","MICRO 3","EVELYN"],
+  ["VALDIR AZEVEDO","SABOYA","MICRO 2","LARISSA"],
+  ["VIRGINIA ARTIGAS","GUAMIRANGA","MICRO 3","LUCAS"],
+  ["WILMAR JORGE","GUAMIRANGA","MICRO 4","TÂNIA"],
+];
+
+const STORAGE_KEY = 'microareas_data_v1';
+const COLOR_KEY   = 'microareas_colors_v1';
+
+const DEFAULT_COLORS = {
+  bg:'#f0ede8', accent:'#2563eb', ink:'#1a1a1a', surface:'#ffffff',
+  saboya:'#fef3c7', daltro:'#fce7f3', guamiranga:'#d1fae5', vilamaria:'#ede9fe'
+};
+
+// ── persist ──
+function loadData(){ const s=localStorage.getItem(STORAGE_KEY); if(s) try{ DATA=JSON.parse(s); }catch(e){} }
+function saveData(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(DATA)); }
+function loadColors(){ const s=localStorage.getItem(COLOR_KEY); if(s) try{ return JSON.parse(s); }catch(e){} return {...DEFAULT_COLORS}; }
+function saveColors(c){ localStorage.setItem(COLOR_KEY,JSON.stringify(c)); }
+
+function applyColors(c){
+  const r=document.documentElement.style;
+  r.setProperty('--bg',c.bg);
+  r.setProperty('--accent',c.accent);
+  r.setProperty('--accent-light',c.accent+'28');
+  r.setProperty('--ink',c.ink);
+  r.setProperty('--surface',c.surface);
+  r.setProperty('--tag-saboya',c.saboya);
+  r.setProperty('--tag-daltro',c.daltro);
+  r.setProperty('--tag-guamiranga',c.guamiranga);
+  r.setProperty('--tag-vilamaria',c.vilamaria);
+}
+
+// ── helpers ──
+function norm(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+function hl(text,q){
+  if(!q) return text;
+  const n=norm(q),nt=norm(text);
+  let r='',i=0;
+  while(i<text.length){ const idx=nt.indexOf(n,i); if(idx===-1){r+=text.slice(i);break;} r+=text.slice(i,idx)+'<mark>'+text.slice(idx,idx+n.length)+'</mark>'; i=idx+n.length; }
+  return r;
+}
+function eqClass(eq){ return 'tag-equipe-'+eq.replace(/\s/g,'').toUpperCase(); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2300); }
+
+// ── search & render ──
+let activeEquipe='';
+function render(){
+  const raw=document.getElementById('search').value.trim();
+  const q=norm(raw);
+  document.getElementById('clearBtn').style.display=raw?'block':'none';
+  const filtered=DATA.filter(([a,e,m,ag])=>{
+    if(activeEquipe && e.toUpperCase()!==activeEquipe) return false;
+    return !q||[a,e,m,ag].some(v=>norm(v).includes(q));
+  });
+  const tot=filtered.length;
+  document.getElementById('statsBar').innerHTML=q||activeEquipe
+    ?`<strong>${tot}</strong> resultado${tot!==1?'s':''} de <strong>${DATA.length}</strong> registros`
+    :`<strong>${DATA.length}</strong> registros no total`;
+  const res=document.getElementById('results');
+  if(!tot){ res.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>Nenhum resultado</h3><p>Tente outros termos.</p></div>`; return; }
+  res.innerHTML=filtered.map(([a,e,m,ag])=>`
+    <div class="card">
+      <div class="card-address">${hl(a,raw)}</div>
+      <div class="card-meta"><span class="tag ${eqClass(e)}">${hl(e,raw)}</span><span class="agent-chip">${hl(ag,raw)}</span></div>
+      <div class="micro-badge">${hl(m,raw)}</div>
+    </div>`).join('');
+}
+
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('clearBtn').addEventListener('click',()=>{ document.getElementById('search').value=''; render(); document.getElementById('search').focus(); });
+document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
+  document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+  p.classList.add('active'); activeEquipe=p.dataset.equipe; render();
+}));
+
+// ── login ──
+document.getElementById('openSettingsBtn').addEventListener('click',()=>{
+  document.getElementById('pwdInput').value='';
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('loginOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('pwdInput').focus(),80);
+});
+document.getElementById('cancelLoginBtn').addEventListener('click',()=>document.getElementById('loginOverlay').classList.remove('open'));
+document.getElementById('loginBtn').addEventListener('click',tryLogin);
+document.getElementById('pwdInput').addEventListener('keydown',e=>{ if(e.key==='Enter') tryLogin(); });
+
+function tryLogin(){
+  if(document.getElementById('pwdInput').value===ADMIN_PASSWORD){
+    document.getElementById('loginOverlay').classList.remove('open');
+    openSettings();
+  } else {
+    document.getElementById('loginError').style.display='block';
+    document.getElementById('pwdInput').value='';
+    document.getElementById('pwdInput').focus();
+  }
+}
+
+// ── settings ──
+function openSettings(){
+  document.getElementById('settingsOverlay').classList.add('open');
+  syncColorInputs();
+  renderRecTable('');
+  renderTeamsView();
+}
+document.getElementById('closeSettingsBtn').addEventListener('click',()=>document.getElementById('settingsOverlay').classList.remove('open'));
+document.getElementById('settingsOverlay').addEventListener('click',e=>{ if(e.target.id==='settingsOverlay') document.getElementById('settingsOverlay').classList.remove('open'); });
+
+document.querySelectorAll('.stab').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.stab-body').forEach(b=>b.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
+  if(tab.dataset.tab==='records') renderRecTable(document.getElementById('recSearch').value);
+  if(tab.dataset.tab==='teams') renderTeamsView();
+}));
+
+// ── colors ──
+function syncColorInputs(){
+  const c=loadColors();
+  document.getElementById('c-bg').value=c.bg;
+  document.getElementById('c-accent').value=c.accent;
+  document.getElementById('c-ink').value=c.ink;
+  document.getElementById('c-surface').value=c.surface;
+  document.getElementById('c-saboya').value=c.saboya;
+  document.getElementById('c-daltro').value=c.daltro;
+  document.getElementById('c-guamiranga').value=c.guamiranga;
+  document.getElementById('c-vilamaria').value=c.vilamaria;
+}
+document.getElementById('applyColorsBtn').addEventListener('click',()=>{
+  const c={
+    bg:document.getElementById('c-bg').value,
+    accent:document.getElementById('c-accent').value,
+    ink:document.getElementById('c-ink').value,
+    surface:document.getElementById('c-surface').value,
+    saboya:document.getElementById('c-saboya').value,
+    daltro:document.getElementById('c-daltro').value,
+    guamiranga:document.getElementById('c-guamiranga').value,
+    vilamaria:document.getElementById('c-vilamaria').value,
+  };
+  applyColors(c); saveColors(c); toast('✅ Cores aplicadas!');
+});
+document.getElementById('resetColorsBtn').addEventListener('click',()=>{
+  applyColors(DEFAULT_COLORS); saveColors(DEFAULT_COLORS); syncColorInputs(); toast('🔄 Cores restauradas');
+});
+
+// ── records table ──
+document.getElementById('recSearch').addEventListener('input',e=>renderRecTable(e.target.value));
+function renderRecTable(q){
+  const n=norm(q||'');
+  const rows=DATA.map((row,i)=>({row,i})).filter(({row})=>!n||row.some(v=>norm(v).includes(n)));
+  document.getElementById('recBody').innerHTML=rows.map(({row,i})=>`
+    <tr>
+      <td>${row[0]}</td>
+      <td><span class="tag ${eqClass(row[1])}" style="font-size:0.68rem;">${row[1]}</span></td>
+      <td>${row[2]}</td>
+      <td>${row[3]}</td>
+      <td><div class="act-btns"><button class="btn-edit" onclick="editRec(${i})">✏️</button><button class="btn-del" onclick="deleteRec(${i})">🗑️</button></div></td>
+    </tr>`).join('');
+}
+window.deleteRec=function(i){ if(!confirm(`Excluir "${DATA[i][0]}"?`)) return; DATA.splice(i,1); saveData(); render(); renderRecTable(document.getElementById('recSearch').value); renderTeamsView(); toast('🗑️ Registro excluído'); };
+
+// ── form ──
+let editIdx=-1;
+document.getElementById('addRecBtn').addEventListener('click',()=>openForm(-1));
+document.getElementById('cancelFormBtn').addEventListener('click',()=>document.getElementById('formOverlay').classList.remove('open'));
+document.getElementById('formOverlay').addEventListener('click',e=>{ if(e.target.id==='formOverlay') document.getElementById('formOverlay').classList.remove('open'); });
+window.editRec=function(i){ openForm(i); };
+
+function openForm(i){
+  editIdx=i;
+  document.getElementById('formTitle').textContent=i===-1?'Novo Registro':'Editar Registro';
+  document.getElementById('fAddr').value=i===-1?'':DATA[i][0];
+  document.getElementById('fEquipe').value=i===-1?'SABOYA':DATA[i][1];
+  document.getElementById('fMicro').value=i===-1?'':DATA[i][2];
+  document.getElementById('fAgent').value=i===-1?'':DATA[i][3];
+  document.getElementById('formOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fAddr').focus(),80);
+}
+document.getElementById('saveRecBtn').addEventListener('click',()=>{
+  const a=document.getElementById('fAddr').value.trim().toUpperCase();
+  const e=document.getElementById('fEquipe').value;
+  const m=document.getElementById('fMicro').value.trim().toUpperCase();
+  const ag=document.getElementById('fAgent').value.trim().toUpperCase();
+  if(!a||!m||!ag){ toast('⚠️ Preencha todos os campos'); return; }
+  if(editIdx===-1){ DATA.push([a,e,m,ag]); toast('✅ Registro adicionado!'); }
+  else { DATA[editIdx]=[a,e,m,ag]; toast('✅ Registro atualizado!'); }
+  saveData(); render(); renderRecTable(document.getElementById('recSearch').value); renderTeamsView();
+  document.getElementById('formOverlay').classList.remove('open');
+});
+
+// ── teams view ──
+function renderTeamsView(){
+  const eq={};
+  DATA.forEach(([,e,,ag])=>{ if(!eq[e]) eq[e]={}; eq[e][ag]=(eq[e][ag]||0)+1; });
+  document.getElementById('teamsView').innerHTML=Object.entries(eq).map(([e,agents])=>`
+    <div class="team-block">
+      <div class="team-block-header">
+        <span class="tag ${eqClass(e)}">${e}</span>
+        <span style="font-size:0.8rem;color:var(--ink-soft);">${Object.values(agents).reduce((a,b)=>a+b,0)} endereços</span>
+      </div>
+      <div class="agents-chips">${Object.entries(agents).map(([ag,cnt])=>`<span class="agent-tag">${ag} <span class="agent-count">(${cnt})</span></span>`).join('')}</div>
+    </div>`).join('');
+}
+
+// ── init ──
+loadData();
+applyColors(loadColors());
+render();
+
+// ── PWA Service Worker ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('SW registrado'))
+      .catch(e => console.log('SW erro:', e));
+  });
+}
+</script>
+</body>
+</html>
