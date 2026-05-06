@@ -167,6 +167,20 @@
   .toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--ink); color:white; padding:0.75rem 1.5rem; border-radius:999px; font-size:0.85rem; font-weight:500; z-index:200; transition:transform 0.3s ease; pointer-events:none; white-space:nowrap; }
   .toast.show { transform:translateX(-50%) translateY(0); }
 
+  /* Install button */
+  .install-btn { background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.25); color:white; border-radius:10px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.78rem; font-family:'DM Sans',sans-serif; display:none; align-items:center; gap:0.35rem; transition:all 0.2s; white-space:nowrap; font-weight:500; }
+  .install-btn:hover { background:rgba(255,255,255,0.22); }
+  .install-btn.visible { display:flex; }
+
+  /* iOS install modal */
+  .ios-modal { background:var(--surface); border-radius:20px; padding:2rem 1.5rem; width:100%; max-width:340px; box-shadow:0 24px 60px rgba(0,0,0,0.25); animation:popIn 0.2s ease; text-align:center; }
+  .ios-modal h3 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; margin-bottom:0.5rem; }
+  .ios-modal p { font-size:0.85rem; color:var(--ink-soft); margin-bottom:1.5rem; line-height:1.5; }
+  .ios-steps { display:flex; flex-direction:column; gap:0.75rem; text-align:left; margin-bottom:1.5rem; }
+  .ios-step { display:flex; align-items:center; gap:0.75rem; font-size:0.85rem; }
+  .ios-step-num { width:28px; height:28px; border-radius:50%; background:var(--accent); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; }
+  .ios-step-icon { font-size:1.3rem; }
+
   /* Install banner */
   .install-banner { display:none; position:fixed; bottom:1.25rem; left:50%; transform:translateX(-50%); z-index:150; background:var(--ink); color:white; border-radius:16px; padding:0.9rem 1.25rem; box-shadow:0 8px 32px rgba(0,0,0,0.25); align-items:center; gap:0.85rem; max-width:360px; width:calc(100% - 2rem); animation:slideUp 0.35s ease; }
   .install-banner.show { display:flex; }
@@ -244,7 +258,10 @@
       <p class="header-sub">Busque por endereço, equipe, micro área ou agente</p>
       <p class="header-credit">criado por Joseph Ribeiro</p>
     </div>
-    <button class="settings-btn" id="openSettingsBtn" title="Configurações">⚙️</button>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;">
+      <button class="settings-btn" id="openSettingsBtn" title="Configurações">⚙️</button>
+      <button class="install-btn" id="installBtn" title="Instalar app">📲 Instalar</button>
+    </div>
   </div>
 </header>
 
@@ -381,15 +398,39 @@
   </div>
 </div>
 
+<!-- iOS INSTALL MODAL -->
+<div class="overlay" id="iosInstallOverlay">
+  <div class="ios-modal">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">📲</div>
+    <h3>Instalar app</h3>
+    <p>Siga os passos abaixo para adicionar o app à sua tela inicial:</p>
+    <div class="ios-steps">
+      <div class="ios-step">
+        <div class="ios-step-num">1</div>
+        <div><span class="ios-step-icon">⬆️</span> Toque no botão <strong>Compartilhar</strong> (na barra inferior do Safari)</div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">2</div>
+        <div>Role para baixo e toque em <strong>"Adicionar à Tela de Início"</strong></div>
+      </div>
+      <div class="ios-step">
+        <div class="ios-step-num">3</div>
+        <div>Toque em <strong>"Adicionar"</strong> no canto superior direito</div>
+      </div>
+    </div>
+    <button class="btn-primary full" id="closeIosModal">Entendido</button>
+  </div>
+</div>
+
 <!-- INSTALL BANNER -->
 <div class="install-banner" id="installBanner">
   <div class="install-banner-icon">📲</div>
   <div class="install-banner-text">
     <strong>Instalar app</strong>
-    <span>Adicione à tela inicial para usar offline</span>
+    <span>Use offline, como um app nativo</span>
   </div>
-  <button class="install-banner-btn" id="installBtn">Instalar</button>
-  <button class="install-banner-close" id="dismissBanner" title="Fechar">✕</button>
+  <button class="install-banner-btn" id="installBannerBtn">Instalar</button>
+  <button class="install-banner-close" id="dismissBanner">✕</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -397,7 +438,7 @@
 <script>
 // ════════════════════════════════════════════════
 //  ⚠️  TROQUE A SENHA AQUI antes de publicar:
-const ADMIN_PASSWORD = "Joe@2406";
+const ADMIN_PASSWORD = "SUA_SENHA_AQUI";
 // ════════════════════════════════════════════════
 
 let DATA = [
@@ -782,45 +823,85 @@ applyColors(loadColors());
 loadLogo();
 render();
 
-// ── PWA Install Banner ──
+// ── PWA Install ──
 let deferredPrompt = null;
-const banner = document.getElementById('installBanner');
+const installBtn   = document.getElementById('installBtn');
+const installBanner = document.getElementById('installBanner');
+const installBannerBtn = document.getElementById('installBannerBtn');
 
 function isInstalled() {
   return window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone === true
-    || document.referrer.includes('android-app://');
+      || window.navigator.standalone === true
+      || document.referrer.includes('android-app://');
+}
+
+function isIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+}
+
+function isSafari() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+}
+
+function showInstallUI() {
+  if (isInstalled()) return; // já instalado, não mostra nada
+  installBtn.classList.add('visible');
+  if (!sessionStorage.getItem('bannerDismissed')) {
+    setTimeout(() => installBanner.classList.add('show'), 2000);
+  }
+}
+
+async function triggerInstall() {
+  installBanner.classList.remove('show');
+  if (isIOS() && isSafari()) {
+    document.getElementById('iosInstallOverlay').classList.add('open');
+    return;
+  }
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (outcome === 'accepted') {
+      installBtn.classList.remove('visible');
+      toast('✅ App instalado com sucesso!');
+    }
+  } else {
+    // Chrome sem prompt ainda (ex: desktop) — orienta usuário
+    toast('No Chrome: clique no ícone ⊕ na barra de endereços para instalar');
+  }
 }
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
-  if (!isInstalled() && !sessionStorage.getItem('installDismissed')) {
-    setTimeout(() => banner.classList.add('show'), 1500);
-  }
+  showInstallUI();
 });
 
-document.getElementById('installBtn').addEventListener('click', async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    banner.classList.remove('show');
-    if (outcome === 'accepted') toast('✅ App instalado com sucesso!');
-  } else {
-    // iOS Safari fallback
-    toast('No Safari: toque em Compartilhar → Adicionar à Tela de Início');
-    banner.classList.remove('show');
-  }
-});
+// iOS: mostra o botão direto pois não tem beforeinstallprompt
+if (isIOS() && isSafari() && !isInstalled()) {
+  showInstallUI();
+}
+
+// Tenta mostrar mesmo sem o evento (ex: Chrome desktop que já capturou antes)
+if (!isInstalled()) {
+  setTimeout(showInstallUI, 500);
+}
+
+installBtn.addEventListener('click', triggerInstall);
+installBannerBtn.addEventListener('click', triggerInstall);
 
 document.getElementById('dismissBanner').addEventListener('click', () => {
-  banner.classList.remove('show');
-  sessionStorage.setItem('installDismissed', '1');
+  installBanner.classList.remove('show');
+  sessionStorage.setItem('bannerDismissed', '1');
+});
+
+document.getElementById('closeIosModal').addEventListener('click', () => {
+  document.getElementById('iosInstallOverlay').classList.remove('open');
 });
 
 window.addEventListener('appinstalled', () => {
-  banner.classList.remove('show');
+  installBtn.classList.remove('visible');
+  installBanner.classList.remove('show');
   toast('✅ App instalado!');
 });
 
