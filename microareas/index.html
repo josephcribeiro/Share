@@ -731,12 +731,17 @@ function setSyncStatus(status) {
 }
 
 // ── Firebase persist ──
-let _fbListenerActive = false;
+function dataToObjects(arr) {
+  return arr.map(([addr, equipe, micro, agent]) => ({ addr, equipe, micro, agent }));
+}
+function objectsToData(objs) {
+  return objs.map(o => [o.addr, o.equipe, o.micro, o.agent]);
+}
 
 async function fbSaveAll() {
   setSyncStatus('saving');
   const payload = {
-    data:    DATA,
+    data:    dataToObjects(DATA),
     colors:  loadColorsLocal(),
     logo:    localStorage.getItem(LOGO_KEY) || '',
     pwd:     localStorage.getItem(PWD_KEY)  || '',
@@ -747,6 +752,7 @@ async function fbSaveAll() {
     setSyncStatus('saved');
   } catch(e) {
     setSyncStatus('error');
+    console.error('Firebase save error:', e);
   }
 }
 
@@ -762,7 +768,7 @@ function applyRemoteData(remote) {
 
   // Dados
   if (remote.data && Array.isArray(remote.data)) {
-    DATA = remote.data;
+    DATA = objectsToData(remote.data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
     render();
     if (document.getElementById('settingsOverlay').classList.contains('open')) {
