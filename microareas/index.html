@@ -306,6 +306,7 @@
       <div class="stab" data-tab="logo">🖼️ Logo</div>
       <div class="stab" data-tab="records">📋 Endereços</div>
       <div class="stab" data-tab="teams">🏷️ Equipes</div>
+      <div class="stab" data-tab="security">🔑 Senha</div>
     </div>
 
     <!-- COLORS -->
@@ -373,6 +374,27 @@
       <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.25rem;">Equipes e agentes cadastrados no sistema.</p>
       <div id="teamsView"></div>
     </div>
+
+    <!-- SECURITY -->
+    <div class="stab-body" id="tab-security">
+      <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.5rem;">A senha fica salva neste dispositivo. Altere aqui sempre que precisar — sem editar código.</p>
+      <div class="form-field">
+        <label>Senha atual</label>
+        <input type="password" id="pwdCurrent" placeholder="Digite a senha atual" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label>Nova senha</label>
+        <input type="password" id="pwdNew" placeholder="Digite a nova senha" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label>Confirmar nova senha</label>
+        <input type="password" id="pwdConfirm" placeholder="Repita a nova senha" autocomplete="off">
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="savePwdBtn">Salvar nova senha</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -436,11 +458,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════════════════════
-//  ⚠️  TROQUE A SENHA AQUI antes de publicar:
-const ADMIN_PASSWORD = "SUA_SENHA_AQUI";
-// ════════════════════════════════════════════════
-
 let DATA = [
   ["ADEMAR MANARINI","GUAMIRANGA","MICRO 3","LUCAS"],
   ["ADRIANA VARANDAS, 3405","SABOYA","MICRO 2","LARISSA"],
@@ -620,6 +637,10 @@ let DATA = [
 
 const STORAGE_KEY = 'microareas_data_v1';
 const COLOR_KEY   = 'microareas_colors_v1';
+const PWD_KEY     = 'microareas_pwd_v1';
+const DEFAULT_PWD = 'admin123'; // senha inicial — troque nas configurações
+
+function getPassword(){ return localStorage.getItem(PWD_KEY) || DEFAULT_PWD; }
 
 const DEFAULT_COLORS = {
   bg:'#f0ede8', accent:'#2563eb', ink:'#1a1a1a', surface:'#ffffff',
@@ -700,7 +721,7 @@ document.getElementById('loginBtn').addEventListener('click',tryLogin);
 document.getElementById('pwdInput').addEventListener('keydown',e=>{ if(e.key==='Enter') tryLogin(); });
 
 function tryLogin(){
-  if(document.getElementById('pwdInput').value===ADMIN_PASSWORD){
+  if(document.getElementById('pwdInput').value===getPassword()){
     document.getElementById('loginOverlay').classList.remove('open');
     openSettings();
   } else {
@@ -803,7 +824,20 @@ document.getElementById('saveRecBtn').addEventListener('click',()=>{
   document.getElementById('formOverlay').classList.remove('open');
 });
 
-// ── teams view ──
+// ── password change ──
+document.getElementById('savePwdBtn').addEventListener('click',()=>{
+  const current = document.getElementById('pwdCurrent').value;
+  const novo    = document.getElementById('pwdNew').value;
+  const confirm = document.getElementById('pwdConfirm').value;
+  if(current !== getPassword()){ toast('❌ Senha atual incorreta'); return; }
+  if(!novo || novo.length < 4){ toast('⚠️ Nova senha deve ter ao menos 4 caracteres'); return; }
+  if(novo !== confirm){ toast('⚠️ As senhas não coincidem'); return; }
+  localStorage.setItem(PWD_KEY, novo);
+  document.getElementById('pwdCurrent').value='';
+  document.getElementById('pwdNew').value='';
+  document.getElementById('pwdConfirm').value='';
+  toast('✅ Senha alterada com sucesso!');
+});
 function renderTeamsView(){
   const eq={};
   DATA.forEach(([,e,,ag])=>{ if(!eq[e]) eq[e]={}; eq[e][ag]=(eq[e][ag]||0)+1; });
