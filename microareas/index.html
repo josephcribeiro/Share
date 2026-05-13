@@ -12,6 +12,47 @@
 <meta name="apple-mobile-web-app-title" content="MicroÁreas">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script type="module">
+// ── Firebase init (módulo isolado que expõe funções globais) ──
+import { initializeApp }                        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCv44WBwlkKqTHYCI5MfO-TZfBMYgaQK2Y",
+  authDomain: "microareas-2f472.firebaseapp.com",
+  projectId: "microareas-2f472",
+  storageBucket: "microareas-2f472.firebasestorage.app",
+  messagingSenderId: "1072225869521",
+  appId: "1:1072225869521:web:6d7616a775053ebc6faff0"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const REF = doc(db, 'app', 'config');
+
+// Expõe funções para o script principal
+window._fbLoad = async function() {
+  try {
+    const snap = await getDoc(REF);
+    return snap.exists() ? snap.data() : null;
+  } catch(e) { console.error('Firebase load error:', e); return null; }
+};
+
+window._fbSave = async function(data) {
+  try {
+    await setDoc(REF, data, { merge: true });
+  } catch(e) { console.error('Firebase save error:', e); }
+};
+
+window._fbListen = function(callback) {
+  return onSnapshot(REF, snap => {
+    if (snap.exists()) callback(snap.data());
+  });
+};
+
+window._fbReady = true;
+document.dispatchEvent(new Event('fb-ready'));
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -257,6 +298,7 @@
       <h1>Micro<span>Áreas</span></h1>
       <p class="header-sub">Busque por endereço, equipe, micro área ou agente</p>
       <p class="header-credit">criado por Joseph Ribeiro</p>
+      <p id="syncStatus" style="font-size:0.68rem;color:rgba(255,255,255,0.35);margin-top:0.2rem;font-weight:300;"></p>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;">
       <button class="settings-btn" id="openSettingsBtn" title="Configurações">⚙️</button>
@@ -666,7 +708,7 @@ let DATA = [
   ["WILMAR JORGE","GUAMIRANGA","MICRO 4","TÂNIA"],
 ];
 
-const STORAGE_KEY = 'microareas_data_v1';
+const STORAGE_KEY = 'microareas_data_v1';  // fallback local
 const COLOR_KEY   = 'microareas_colors_v1';
 const PWD_KEY     = 'microareas_pwd_v1';
 const LOGO_KEY    = 'microareas_logo_v1';
@@ -679,11 +721,91 @@ const DEFAULT_COLORS = {
   saboya:'#fef3c7', daltro:'#fce7f3', guamiranga:'#d1fae5', vilamaria:'#ede9fe'
 };
 
-// ── persist ──
-function loadData(){ const s=localStorage.getItem(STORAGE_KEY); if(s) try{ DATA=JSON.parse(s); }catch(e){} }
-function saveData(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(DATA)); }
-function loadColors(){ const s=localStorage.getItem(COLOR_KEY); if(s) try{ return JSON.parse(s); }catch(e){} return {...DEFAULT_COLORS}; }
-function saveColors(c){ localStorage.setItem(COLOR_KEY,JSON.stringify(c)); }
+// ── Indicador de sincronização ──
+function setSyncStatus(status) {
+  // status: 'saving' | 'saved' | 'error' | 'loading'
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const map = { saving:'⏳ Salvando…', saved:'☁️ Sincronizado', error:'⚠️ Sem conexão', loading:'⏳ Carregando…' };
+  el.textContent = map[status] || '';
+}
+
+// ── Firebase persist ──
+let _fbListenerActive = false;
+
+async function fbSaveAll() {
+  setSyncStatus('saving');
+  const payload = {
+    data:    DATA,
+    colors:  loadColorsLocal(),
+    logo:    localStorage.getItem(LOGO_KEY) || '',
+    pwd:     localStorage.getItem(PWD_KEY)  || '',
+    updatedAt: Date.now()
+  };
+  try {
+    await window._fbSave(payload);
+    setSyncStatus('saved');
+  } catch(e) {
+    setSyncStatus('error');
+  }
+}
+
+function loadColorsLocal() {
+  const s = localStorage.getItem(COLOR_KEY);
+  if (s) try { return JSON.parse(s); } catch(e) {}
+  return {...DEFAULT_COLORS};
+}
+
+// ── Aplica dados vindos do Firebase ──
+function applyRemoteData(remote) {
+  if (!remote) return;
+
+  // Dados
+  if (remote.data && Array.isArray(remote.data)) {
+    DATA = remote.data;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+    render();
+    if (document.getElementById('settingsOverlay').classList.contains('open')) {
+      renderRecTable('');
+      renderAgentsTab();
+      renderTeamsView();
+    }
+  }
+
+  // Cores
+  if (remote.colors) {
+    localStorage.setItem(COLOR_KEY, JSON.stringify(remote.colors));
+    applyColors(remote.colors);
+  }
+
+  // Logo
+  if (remote.logo) {
+    localStorage.setItem(LOGO_KEY, remote.logo);
+    applyLogo(remote.logo);
+  } else if (remote.logo === '') {
+    removeLogo();
+  }
+
+  // Senha
+  if (remote.pwd) {
+    localStorage.setItem(PWD_KEY, remote.pwd);
+  }
+}
+
+// ── persist local (fallback) ──
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+  fbSaveAll();
+}
+function loadData(){
+  const s = localStorage.getItem(STORAGE_KEY);
+  if (s) try { DATA = JSON.parse(s); } catch(e) {}
+}
+function loadColors(){ return loadColorsLocal(); }
+function saveColors(c){
+  localStorage.setItem(COLOR_KEY, JSON.stringify(c));
+  fbSaveAll();
+}
 
 function applyColors(c){
   const r=document.documentElement.style;
@@ -927,6 +1049,7 @@ document.getElementById('savePwdBtn').addEventListener('click',()=>{
   if(!novo || novo.length < 4){ toast('⚠️ Nova senha deve ter ao menos 4 caracteres'); return; }
   if(novo !== confirm){ toast('⚠️ As senhas não coincidem'); return; }
   localStorage.setItem(PWD_KEY, novo);
+  fbSaveAll();
   document.getElementById('pwdCurrent').value='';
   document.getElementById('pwdNew').value='';
   document.getElementById('pwdConfirm').value='';
@@ -946,10 +1069,34 @@ function renderTeamsView(){
 }
 
 // ── init ──
-loadData();
+loadData();           // carrega local primeiro (resposta imediata)
 applyColors(loadColors());
 loadLogo();
 render();
+
+// Quando Firebase estiver pronto, carrega da nuvem e ativa listener
+async function initFirebase() {
+  setSyncStatus('loading');
+  const remote = await window._fbLoad();
+  if (remote) {
+    applyRemoteData(remote);
+    setSyncStatus('saved');
+  } else {
+    // primeira vez: sobe os dados locais para a nuvem
+    fbSaveAll();
+  }
+  // Listener em tempo real — atualiza automaticamente em todos os dispositivos
+  window._fbListen(remoteData => {
+    applyRemoteData(remoteData);
+    setSyncStatus('saved');
+  });
+}
+
+if (window._fbReady) {
+  initFirebase();
+} else {
+  document.addEventListener('fb-ready', initFirebase);
+}
 
 // ── PWA Install ──
 let deferredPrompt = null;
@@ -1094,6 +1241,7 @@ document.getElementById('applyLogoBtn').addEventListener('click', () => {
   const pending = document.getElementById('applyLogoBtn').dataset.pending;
   if (pending) {
     localStorage.setItem(LOGO_KEY, pending);
+    fbSaveAll();
     toast('✅ Logo aplicada e salva!');
     delete document.getElementById('applyLogoBtn').dataset.pending;
   } else {
@@ -1103,6 +1251,8 @@ document.getElementById('applyLogoBtn').addEventListener('click', () => {
 
 document.getElementById('resetLogoBtn').addEventListener('click', () => {
   removeLogo();
+  localStorage.removeItem(LOGO_KEY);
+  fbSaveAll();
   toast('🔄 Logo removida');
 });
 
