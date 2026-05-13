@@ -1,4 +1,4 @@
-const CACHE_NAME = 'microareas-v3';
+const CACHE_NAME = 'microareas-v4';
 const STATIC_ASSETS = [
   './manifest.json',
   './icon-192.png',
@@ -6,7 +6,6 @@ const STATIC_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap'
 ];
 
-// Instala e cacheia só os assets estáticos (NÃO o index.html)
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
@@ -15,7 +14,6 @@ self.addEventListener('install', e => {
   );
 });
 
-// Remove caches antigos
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
@@ -25,9 +23,12 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Ignora requisições não-GET (Firebase usa POST internamente)
+  if (e.request.method !== 'GET') return;
+
   const url = new URL(e.request.url);
 
-  // index.html: SEMPRE busca da rede (nunca usa cache)
+  // index.html: SEMPRE busca da rede
   if (url.pathname.endsWith('/') || url.pathname.endsWith('index.html')) {
     e.respondWith(
       fetch(e.request).catch(() => caches.match('./index.html'))
@@ -35,7 +36,15 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Demais assets: cache first
+  // Firebase e APIs externas: sempre rede, sem cache
+  if (url.hostname.includes('firebase') || 
+      url.hostname.includes('google') ||
+      url.hostname.includes('gstatic')) {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  // Demais assets estáticos: cache first
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
