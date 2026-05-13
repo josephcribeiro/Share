@@ -638,7 +638,8 @@ let DATA = [
 const STORAGE_KEY = 'microareas_data_v1';
 const COLOR_KEY   = 'microareas_colors_v1';
 const PWD_KEY     = 'microareas_pwd_v1';
-const DEFAULT_PWD = 'admin123'; // senha inicial — troque nas configurações
+const LOGO_KEY    = 'microareas_logo_v1';
+const DEFAULT_PWD = 'admin123';
 
 function getPassword(){ return localStorage.getItem(PWD_KEY) || DEFAULT_PWD; }
 
@@ -940,8 +941,6 @@ window.addEventListener('appinstalled', () => {
 });
 
 // ── Logo ──
-const LOGO_KEY = 'microareas_logo_v1';
-
 function loadLogo() {
   const saved = localStorage.getItem(LOGO_KEY);
   if (saved) applyLogo(saved);
