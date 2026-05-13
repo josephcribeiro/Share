@@ -305,6 +305,7 @@
       <div class="stab active" data-tab="colors">🎨 Cores</div>
       <div class="stab" data-tab="logo">🖼️ Logo</div>
       <div class="stab" data-tab="records">📋 Endereços</div>
+      <div class="stab" data-tab="agents">👤 Agentes</div>
       <div class="stab" data-tab="teams">🏷️ Equipes</div>
       <div class="stab" data-tab="security">🔑 Senha</div>
     </div>
@@ -366,6 +367,36 @@
           <thead><tr><th>Endereço</th><th>Equipe</th><th>Micro</th><th>Agente</th><th></th></tr></thead>
           <tbody id="recBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- AGENTS -->
+    <div class="stab-body" id="tab-agents">
+      <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.25rem;">Selecione um agente e renomeie. Todos os endereços vinculados a ele serão atualizados automaticamente.</p>
+
+      <div class="form-field">
+        <label>Agente atual</label>
+        <select id="agentSelect" style="padding:0.7rem 0.9rem;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;background:var(--surface);color:var(--ink);width:100%;">
+          <option value="">— selecione um agente —</option>
+        </select>
+      </div>
+
+      <div id="agentInfo" style="display:none;background:var(--bg);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:var(--ink-soft);">
+        <span id="agentCount"></span>
+      </div>
+
+      <div class="form-field">
+        <label>Novo nome</label>
+        <input type="text" id="agentNewName" placeholder="Digite o novo nome do agente" autocomplete="off">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="renameAgentBtn">Renomear agente</button>
+      </div>
+
+      <div style="margin-top:1.5rem;border-top:1.5px solid var(--border);padding-top:1.25rem;">
+        <p style="font-size:0.8rem;font-weight:600;color:var(--ink-soft);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.05em;">Todos os agentes</p>
+        <div id="allAgentsList" style="display:flex;flex-wrap:wrap;gap:0.4rem;"></div>
       </div>
     </div>
 
@@ -738,6 +769,7 @@ function openSettings(){
   syncColorInputs();
   renderRecTable('');
   renderTeamsView();
+  renderAgentsTab();
 }
 document.getElementById('closeSettingsBtn').addEventListener('click',()=>document.getElementById('settingsOverlay').classList.remove('open'));
 document.getElementById('settingsOverlay').addEventListener('click',e=>{ if(e.target.id==='settingsOverlay') document.getElementById('settingsOverlay').classList.remove('open'); });
@@ -749,6 +781,7 @@ document.querySelectorAll('.stab').forEach(tab=>tab.addEventListener('click',()=
   document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
   if(tab.dataset.tab==='records') renderRecTable(document.getElementById('recSearch').value);
   if(tab.dataset.tab==='teams') renderTeamsView();
+  if(tab.dataset.tab==='agents') renderAgentsTab();
 }));
 
 // ── colors ──
@@ -825,7 +858,67 @@ document.getElementById('saveRecBtn').addEventListener('click',()=>{
   document.getElementById('formOverlay').classList.remove('open');
 });
 
-// ── password change ──
+// ── agents tab ──
+function renderAgentsTab() {
+  const counts = {};
+  DATA.forEach(([,,,ag]) => { counts[ag] = (counts[ag]||0) + 1; });
+  const sorted = Object.keys(counts).sort();
+
+  // populate select
+  const sel = document.getElementById('agentSelect');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— selecione um agente —</option>';
+  sorted.forEach(ag => {
+    const opt = document.createElement('option');
+    opt.value = ag; opt.textContent = `${ag} (${counts[ag]})`;
+    sel.appendChild(opt);
+  });
+  if (prev && counts[prev]) sel.value = prev;
+  updateAgentInfo();
+
+  // list all
+  document.getElementById('allAgentsList').innerHTML = sorted.map(ag =>
+    `<span style="background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:0.25rem 0.7rem;font-size:0.78rem;font-weight:500;cursor:pointer;" onclick="pickAgent('${ag}')">${ag} <span style="color:var(--ink-soft);font-weight:300;">(${counts[ag]})</span></span>`
+  ).join('');
+}
+
+function updateAgentInfo() {
+  const ag = document.getElementById('agentSelect').value;
+  const info = document.getElementById('agentInfo');
+  if (!ag) { info.style.display='none'; return; }
+  const count = DATA.filter(([,,,a]) => a===ag).length;
+  document.getElementById('agentCount').textContent = `📍 ${count} endereço${count!==1?'s':''} vinculado${count!==1?'s':''} a este agente`;
+  info.style.display = 'block';
+  document.getElementById('agentNewName').value = ag;
+}
+
+window.pickAgent = function(ag) {
+  document.getElementById('agentSelect').value = ag;
+  updateAgentInfo();
+  document.getElementById('agentNewName').focus();
+};
+
+document.getElementById('agentSelect').addEventListener('change', updateAgentInfo);
+
+document.getElementById('renameAgentBtn').addEventListener('click', () => {
+  const oldName = document.getElementById('agentSelect').value.trim();
+  const newName = document.getElementById('agentNewName').value.trim().toUpperCase();
+  if (!oldName) { toast('⚠️ Selecione um agente'); return; }
+  if (!newName) { toast('⚠️ Digite o novo nome'); return; }
+  if (oldName === newName) { toast('⚠️ O nome é igual ao atual'); return; }
+
+  let count = 0;
+  DATA = DATA.map(([a,e,m,ag]) => {
+    if (ag === oldName) { count++; return [a,e,m,newName]; }
+    return [a,e,m,ag];
+  });
+  saveData();
+  render();
+  renderAgentsTab();
+  renderTeamsView();
+  renderRecTable(document.getElementById('recSearch').value);
+  toast(`✅ "${oldName}" renomeado para "${newName}" em ${count} registro${count!==1?'s':''}!`);
+});
 document.getElementById('savePwdBtn').addEventListener('click',()=>{
   const current = document.getElementById('pwdCurrent').value;
   const novo    = document.getElementById('pwdNew').value;
