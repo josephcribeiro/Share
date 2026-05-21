@@ -25,6 +25,9 @@
       --notfound: #2c6e49;
       --notfound-bg: #f1f8f4;
       --notfound-border: #b8ddc8;
+      --blue-bg: #eef4fb;
+      --blue-border: #b8d0ea;
+      --blue-text: #1a4a7a;
     }
 
     body {
@@ -41,7 +44,6 @@
     .wrap { width: 100%; max-width: 500px; }
 
     header { text-align: center; margin-bottom: 40px; }
-
     .eyebrow {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
@@ -50,7 +52,6 @@
       color: var(--text-subtle);
       margin-bottom: 10px;
     }
-
     h1 {
       font-family: 'Lora', serif;
       font-size: 30px;
@@ -58,7 +59,6 @@
       color: var(--accent);
       margin-bottom: 6px;
     }
-
     .tagline { font-size: 13px; color: var(--text-muted); font-weight: 300; }
     .rule { width: 28px; height: 1px; background: var(--border-strong); margin: 14px auto; }
 
@@ -86,51 +86,29 @@
       padding: 3px;
       margin-bottom: 22px;
     }
-
     .toggle button {
-      flex: 1;
-      background: none;
-      border: none;
+      flex: 1; background: none; border: none;
       padding: 9px;
       font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      color: var(--text-muted);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s;
+      font-size: 13px; color: var(--text-muted);
+      border-radius: 6px; cursor: pointer; transition: all 0.15s;
     }
-
     .toggle button.active {
-      background: var(--surface);
-      color: var(--text);
-      font-weight: 500;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      background: var(--surface); color: var(--text);
+      font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
     .field { margin-bottom: 13px; }
-
     label {
-      display: block;
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.04em;
-      margin-bottom: 5px;
-      font-weight: 500;
+      display: block; font-size: 11px; color: var(--text-muted);
+      letter-spacing: 0.04em; margin-bottom: 5px; font-weight: 500;
     }
-
     input {
-      width: 100%;
-      background: var(--neutral-bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      font-size: 15px;
-      padding: 11px 14px;
-      border-radius: 8px;
-      outline: none;
+      width: 100%; background: var(--neutral-bg); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 15px;
+      padding: 11px 14px; border-radius: 8px; outline: none;
       transition: border-color 0.15s, background 0.15s;
     }
-
     input:focus { border-color: var(--accent); background: var(--surface); }
     input::placeholder { color: var(--text-subtle); font-size: 13px; }
 
@@ -140,148 +118,149 @@
     .actions { display: flex; gap: 8px; margin-top: 22px; }
 
     .btn-search {
-      flex: 1;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 13px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s;
+      flex: 1; background: var(--accent); color: #fff; border: none;
+      border-radius: 8px; padding: 13px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: background 0.15s;
     }
-
     .btn-search:hover { background: var(--accent-hover); }
 
     .btn-clear {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 13px 18px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: border-color 0.15s;
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      padding: 13px 18px; font-family: 'DM Sans', sans-serif;
+      font-size: 13px; color: var(--text-muted); cursor: pointer; transition: border-color 0.15s;
     }
-
     .btn-clear:hover { border-color: var(--border-strong); }
 
-    /* ── Resultado ── */
+    /* ── Resultados ── */
     #results { display: none; }
 
-    /* Etapa */
     .step {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 12px;
+      border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; margin-bottom: 12px;
     }
 
     .step-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 18px;
-      background: var(--neutral-bg);
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; background: var(--neutral-bg);
     }
 
     .step-num {
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      background: var(--surface);
-      border: 1px solid var(--border-strong);
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border-strong);
+      font-family: 'DM Mono', monospace; font-size: 11px;
       display: flex; align-items: center; justify-content: center;
-      color: var(--text-muted);
-      flex-shrink: 0;
+      color: var(--text-muted); flex-shrink: 0;
     }
-
     .step-num.done { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    .step-source {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text);
-      flex: 1;
+    .step-source { font-size: 12px; font-weight: 500; color: var(--text); flex: 1; }
+    .step-source-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+
+    .step-body { padding: 16px 18px; border-top: 1px solid var(--border); background: var(--surface); }
+
+    /* Dados copiáveis */
+    .dados-copy {
+      background: var(--blue-bg);
+      border: 1px solid var(--blue-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
     }
 
-    .step-source-sub {
+    .dados-copy-title {
       font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 400;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--blue-text);
+      margin-bottom: 10px;
     }
 
-    .step-body {
-      padding: 16px 18px;
-      border-top: 1px solid var(--border);
-      background: var(--surface);
-    }
-
-    /* Pill resultado */
-    .pill {
+    .dado-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 11px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 12px;
+      padding: 6px 0;
+      border-top: 1px solid var(--blue-border);
+    }
+    .dado-row:first-of-type { border-top: none; }
+
+    .dado-label {
+      font-size: 11px;
+      color: var(--blue-text);
+      opacity: .7;
+      min-width: 80px;
+      flex-shrink: 0;
     }
 
+    .dado-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--blue-text);
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .btn-copy {
+      background: none;
+      border: 1px solid var(--blue-border);
+      border-radius: 5px;
+      padding: 3px 8px;
+      font-size: 10px;
+      color: var(--blue-text);
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-copy:hover { background: var(--blue-border); }
+    .btn-copy.copied { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* Instrução */
+    .instrucao {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      background: var(--neutral-bg);
+      border-radius: 7px;
+    }
+    .instrucao ol { padding-left: 16px; }
+    .instrucao li { margin-bottom: 3px; }
+
+    /* Pill resultado */
+    .pill {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; margin-bottom: 12px;
+    }
     .pill-found    { background: var(--found-bg);    border: 1px solid var(--found-border);    color: var(--found); }
     .pill-notfound { background: var(--notfound-bg); border: 1px solid var(--notfound-border); color: var(--notfound); }
     .pill-pending  { background: var(--neutral-bg);  border: 1px solid var(--border);          color: var(--text-muted); }
-
     .pill-sub { font-size: 11px; font-weight: 400; opacity: .75; margin-top: 2px; }
 
-    /* Botões de ação dentro de cada step */
     .step-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
     .btn-action {
-      padding: 8px 14px;
-      border-radius: 7px;
-      font-size: 12px;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      transition: all 0.15s;
-      font-weight: 500;
+      padding: 8px 14px; border-radius: 7px; font-size: 12px;
+      font-family: 'DM Sans', sans-serif; cursor: pointer;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); transition: all 0.15s; font-weight: 500;
     }
-
     .btn-action:hover { border-color: var(--accent); color: var(--accent); }
-
-    .btn-action.primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-
+    .btn-action.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
     .btn-action.primary:hover { background: var(--accent-hover); }
-
     .btn-action.danger  { border-color: var(--found-border);    color: var(--found); }
     .btn-action.success { border-color: var(--notfound-border); color: var(--notfound); }
-
     .btn-action.danger:hover  { background: var(--found-bg); }
     .btn-action.success:hover { background: var(--notfound-bg); }
 
-    /* Formulário oculto */
-    #form-tjrj { display: none; }
-
     footer {
-      margin-top: 32px;
-      text-align: center;
-      font-size: 11px;
-      color: var(--text-subtle);
-      line-height: 1.9;
+      margin-top: 32px; text-align: center;
+      font-size: 11px; color: var(--text-subtle); line-height: 1.9;
     }
-
     footer a { color: var(--text-subtle); text-decoration: none; }
     footer a:hover { color: var(--accent); }
 
@@ -301,7 +280,6 @@
     <p class="tagline">Pesquisa em fontes públicas gratuitas</p>
   </header>
 
-  <!-- Formulário de busca -->
   <div class="card">
     <div class="section-label">Dados para pesquisa</div>
 
@@ -350,11 +328,11 @@
     </div>
   </div>
 
-  <!-- Resultado em etapas -->
+  <!-- Resultados -->
   <div id="results">
 
     <!-- Etapa 1: TJRJ -->
-    <div class="step" id="step-tjrj">
+    <div class="step">
       <div class="step-header">
         <div class="step-num" id="num-tjrj">1</div>
         <div class="step-source">
@@ -365,7 +343,7 @@
       <div class="step-body" id="body-tjrj"></div>
     </div>
 
-    <!-- Etapa 2: RFB — só aparece após TJRJ ser respondido -->
+    <!-- Etapa 2: RFB — só aparece após TJRJ -->
     <div class="step" id="step-rfb" style="display:none">
       <div class="step-header">
         <div class="step-num" id="num-rfb">2</div>
@@ -379,21 +357,8 @@
 
   </div>
 
-  <!-- Form oculto para POST ao TJRJ -->
-  <form id="form-tjrj" method="POST" action="https://www3.tjrj.jus.br/PORTALEXTRAJUDICIAL/CNO/" target="tjrj-popup">
-    <input type="hidden" name="tipoAto" value="O" />
-    <input type="hidden" name="nome"           id="f-nome" />
-    <input type="hidden" name="nomePai"        id="f-pai" />
-    <input type="hidden" name="nomeMae"        id="f-mae" />
-    <input type="hidden" name="dataNascimento" id="f-nasc" />
-    <input type="hidden" name="dnv"            value="" />
-    <input type="hidden" name="dataObito"      id="f-obito" />
-    <input type="hidden" name="do"             value="" />
-    <input type="hidden" name="cpf"            id="f-cpf" />
-  </form>
-
   <footer>
-    Atos registrados no TJRJ a partir de 01/08/2007 &nbsp;·&nbsp; Fontes públicas gratuitas<br>
+    Fontes públicas e gratuitas &nbsp;·&nbsp; Atos TJRJ a partir de 01/08/2007<br>
     <a href="https://www3.tjrj.jus.br/PORTALEXTRAJUDICIAL/CNO/" target="_blank">TJRJ — Portal Extrajudicial</a>
     &nbsp;·&nbsp;
     <a href="https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp" target="_blank">Receita Federal — CPF</a>
@@ -403,6 +368,7 @@
 <script>
   let currentTipo = 'cpf';
   let cpfAtual = '';
+  let dadosAtual = {};
 
   function setTipo(tipo, btn) {
     currentTipo = tipo;
@@ -434,19 +400,42 @@
     document.getElementById('results').style.display = 'none';
     document.getElementById('step-rfb').style.display = 'none';
     document.getElementById('num-tjrj').className = 'step-num';
-    document.getElementById('num-rfb').className = 'step-num';
+    document.getElementById('num-rfb').className  = 'step-num';
   }
 
   function pill(type, title, sub) {
     const cfg = {
       found:    { cls: 'pill-found',    icon: '✕' },
       notfound: { cls: 'pill-notfound', icon: '✓' },
-      pending:  { cls: 'pill-pending',  icon: '…' },
+      pending:  { cls: 'pill-pending',  icon: '·' },
     };
     const c = cfg[type] || cfg.pending;
     return `<div class="pill ${c.cls}">
-      <span style="font-size:15px">${c.icon}</span>
+      <span style="font-size:16px;font-weight:600">${c.icon}</span>
       <div><div>${title}</div><div class="pill-sub">${sub}</div></div>
+    </div>`;
+  }
+
+  function copiar(texto, btnEl) {
+    navigator.clipboard.writeText(texto).then(() => {
+      btnEl.textContent = '✓';
+      btnEl.classList.add('copied');
+      setTimeout(() => { btnEl.textContent = 'copiar'; btnEl.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  function buildDadosCopy(dados) {
+    let rows = '';
+    dados.forEach(({label, valor}) => {
+      rows += `<div class="dado-row">
+        <span class="dado-label">${label}</span>
+        <span class="dado-val">${valor}</span>
+        <button class="btn-copy" onclick="copiar('${valor}', this)">copiar</button>
+      </div>`;
+    });
+    return `<div class="dados-copy">
+      <div class="dados-copy-title">📋 Preencha no portal com estes dados</div>
+      ${rows}
     </div>`;
   }
 
@@ -460,17 +449,23 @@
     cpfAtual = cpfRaw;
     const cpfFmt = cpfRaw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
 
-    // Preenche form oculto
-    document.getElementById('f-cpf').value   = cpfRaw;
-    document.getElementById('f-nome').value  = nome;
-    document.getElementById('f-pai').value   = document.getElementById('nomePai').value.trim();
-    document.getElementById('f-mae').value   = document.getElementById('nomeMae').value.trim();
-    document.getElementById('f-nasc').value  = document.getElementById('dataNasc').value;
-    document.getElementById('f-obito').value = document.getElementById('dataObito').value;
+    // Monta lista de dados para copiar
+    const dadosList = [];
+    if (cpfRaw) dadosList.push({ label: 'CPF', valor: cpfFmt });
+    if (nome)   dadosList.push({ label: 'Nome', valor: nome });
+    const pai  = document.getElementById('nomePai').value.trim();
+    const mae  = document.getElementById('nomeMae').value.trim();
+    const nasc = document.getElementById('dataNasc').value;
+    const obit = document.getElementById('dataObito').value;
+    if (pai)  dadosList.push({ label: 'Pai',  valor: pai });
+    if (mae)  dadosList.push({ label: 'Mãe',  valor: mae });
+    if (nasc) dadosList.push({ label: 'Nasc.', valor: nasc });
+    if (obit) dadosList.push({ label: 'Óbito', valor: obit });
 
-    // Abre popup TJRJ
-    const popup = window.open('', 'tjrj-popup', 'width=1100,height=700,scrollbars=yes,resizable=yes');
-    document.getElementById('form-tjrj').submit();
+    dadosAtual = dadosList;
+
+    // Abre o portal
+    window.open('https://www3.tjrj.jus.br/PORTALEXTRAJUDICIAL/CNO/', '_blank');
 
     // Monta etapa 1
     document.getElementById('results').style.display = 'block';
@@ -478,9 +473,17 @@
     document.getElementById('num-tjrj').className = 'step-num';
 
     document.getElementById('body-tjrj').innerHTML =
-      pill('pending', 'Consulta aberta no portal do TJRJ', 'Veja o resultado na janela aberta e registre abaixo') +
+      buildDadosCopy(dadosList) +
+      `<div class="instrucao">
+        <ol>
+          <li>No portal que abriu, selecione <strong>Óbito</strong></li>
+          <li>Cole o CPF (ou nome) no campo correspondente</li>
+          <li>Resolva o captcha e clique em <strong>Pesquisar</strong></li>
+          <li>Volte aqui e registre o resultado abaixo</li>
+        </ol>
+      </div>` +
       `<div class="step-actions">
-        <button class="btn-action primary" onclick="abrirTJRJ()">↗ Abrir novamente</button>
+        <button class="btn-action primary" onclick="window.open('https://www3.tjrj.jus.br/PORTALEXTRAJUDICIAL/CNO/', '_blank')">↗ Abrir portal novamente</button>
         <button class="btn-action danger"  onclick="registrarTJRJ('found')">✕&nbsp; Encontrou óbito</button>
         <button class="btn-action success" onclick="registrarTJRJ('notfound')">✓&nbsp; Não encontrou</button>
       </div>`;
@@ -488,32 +491,27 @@
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function abrirTJRJ() {
-    window.open('', 'tjrj-popup', 'width=1100,height=700,scrollbars=yes,resizable=yes');
-    document.getElementById('form-tjrj').submit();
-  }
-
   function registrarTJRJ(resultado) {
     const num = document.getElementById('num-tjrj');
     num.textContent = '✓';
     num.className = 'step-num done';
 
-    if (resultado === 'found') {
-      document.getElementById('body-tjrj').innerHTML =
-        pill('found', 'Óbito encontrado', 'Registro localizado no Portal Extrajudicial do TJRJ');
-    } else {
-      document.getElementById('body-tjrj').innerHTML =
-        pill('notfound', 'Nenhum registro encontrado', 'Sem óbito no TJRJ para os dados informados');
-    }
+    document.getElementById('body-tjrj').innerHTML = resultado === 'found'
+      ? pill('found',    'Óbito encontrado',             'Registro localizado no Portal Extrajudicial do TJRJ')
+      : pill('notfound', 'Nenhum registro encontrado',   'Sem óbito registrado no TJRJ para os dados informados');
 
-    // Libera etapa 2 (RFB) só agora
+    // Libera etapa 2
     const rfb = document.getElementById('step-rfb');
     rfb.style.display = 'block';
 
     if (cpfAtual.length === 11) {
       const cpfFmt = cpfAtual.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
       document.getElementById('body-rfb').innerHTML =
-        pill('pending', 'Acesse a Receita Federal e verifique a situação cadastral', `CPF: ${cpfFmt} — se aparecer "Titular Falecido", registre abaixo`) +
+        buildDadosCopy([{ label: 'CPF', valor: cpfFmt }]) +
+        `<div class="instrucao">
+          Acesse a Receita Federal, informe o CPF e o código de segurança.<br>
+          Se aparecer <strong>"Titular Falecido"</strong>, há óbito registrado.
+        </div>` +
         `<div class="step-actions">
           <a class="btn-action primary" href="https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp" target="_blank">↗ Abrir Receita Federal</a>
           <button class="btn-action danger"  onclick="registrarRFB('found')">✕&nbsp; Titular Falecido</button>
@@ -531,14 +529,9 @@
     const num = document.getElementById('num-rfb');
     num.textContent = '✓';
     num.className = 'step-num done';
-
-    if (resultado === 'found') {
-      document.getElementById('body-rfb').innerHTML =
-        pill('found', 'Titular Falecido', 'CPF com indicação de óbito na Receita Federal');
-    } else {
-      document.getElementById('body-rfb').innerHTML =
-        pill('notfound', 'Situação regular', 'CPF sem indicação de óbito na Receita Federal');
-    }
+    document.getElementById('body-rfb').innerHTML = resultado === 'found'
+      ? pill('found',    'Titular Falecido',  'CPF com indicação de óbito na Receita Federal')
+      : pill('notfound', 'Situação regular',  'CPF sem indicação de óbito na Receita Federal');
   }
 </script>
 </body>
