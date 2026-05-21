@@ -25,9 +25,6 @@
       --notfound: #2c6e49;
       --notfound-bg: #f1f8f4;
       --notfound-border: #b8ddc8;
-      --warn-bg: #fefbe8;
-      --warn-border: #ead87c;
-      --warn-text: #7a5a00;
     }
 
     body {
@@ -43,7 +40,6 @@
 
     .wrap { width: 100%; max-width: 500px; }
 
-    /* Header */
     header { text-align: center; margin-bottom: 40px; }
 
     .eyebrow {
@@ -64,10 +60,8 @@
     }
 
     .tagline { font-size: 13px; color: var(--text-muted); font-weight: 300; }
-
     .rule { width: 28px; height: 1px; background: var(--border-strong); margin: 14px auto; }
 
-    /* Card */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -85,7 +79,6 @@
       margin-bottom: 20px;
     }
 
-    /* Toggle */
     .toggle {
       display: flex;
       background: var(--neutral-bg);
@@ -114,7 +107,6 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
-    /* Inputs */
     .field { margin-bottom: 13px; }
 
     label {
@@ -145,7 +137,6 @@
     .row2 { display: flex; gap: 10px; }
     .row2 .field { flex: 1; }
 
-    /* Ações */
     .actions { display: flex; gap: 8px; margin-top: 22px; }
 
     .btn-search {
@@ -160,10 +151,6 @@
       font-weight: 500;
       cursor: pointer;
       transition: background 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
     }
 
     .btn-search:hover { background: var(--accent-hover); }
@@ -182,110 +169,121 @@
 
     .btn-clear:hover { border-color: var(--border-strong); }
 
-    /* Aviso de funcionamento */
-    .info-box {
-      background: var(--warn-bg);
-      border: 1px solid var(--warn-border);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 12px;
-      color: var(--warn-text);
-      line-height: 1.6;
-      margin-top: 16px;
-    }
-
-    /* Resultados */
+    /* ── Resultado ── */
     #results { display: none; }
 
-    .fonte-block {
-      padding: 16px 0;
-      border-top: 1px solid var(--border);
+    /* Etapa */
+    .step {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 12px;
     }
 
-    .fonte-block:first-child { border-top: none; padding-top: 0; }
-
-    .fonte-header {
+    .step-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--neutral-bg);
     }
 
-    .fonte-nome {
-      font-size: 11px;
+    .step-num {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
       font-family: 'DM Mono', monospace;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-subtle);
+      font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted);
+      flex-shrink: 0;
     }
 
-    /* Resultado pill */
-    .result-pill {
+    .step-num.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .step-source {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .step-source-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .step-body {
+      padding: 16px 18px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    /* Pill resultado */
+    .pill {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 12px 16px;
+      padding: 11px 14px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 500;
+      margin-bottom: 12px;
     }
 
-    .pill-found {
-      background: var(--found-bg);
-      border: 1px solid var(--found-border);
-      color: var(--found);
-    }
+    .pill-found    { background: var(--found-bg);    border: 1px solid var(--found-border);    color: var(--found); }
+    .pill-notfound { background: var(--notfound-bg); border: 1px solid var(--notfound-border); color: var(--notfound); }
+    .pill-pending  { background: var(--neutral-bg);  border: 1px solid var(--border);          color: var(--text-muted); }
 
-    .pill-notfound {
-      background: var(--notfound-bg);
-      border: 1px solid var(--notfound-border);
-      color: var(--notfound);
-    }
+    .pill-sub { font-size: 11px; font-weight: 400; opacity: .75; margin-top: 2px; }
 
-    .pill-pending {
-      background: var(--neutral-bg);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-    }
+    /* Botões de ação dentro de cada step */
+    .step-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    .pill-icon { font-size: 16px; }
-
-    .pill-text { flex: 1; line-height: 1.4; }
-
-    .pill-sub {
-      font-size: 11px;
-      font-weight: 400;
-      opacity: 0.75;
-      margin-top: 2px;
-    }
-
-    .link-fonte {
-      display: inline-block;
-      margin-top: 8px;
+    .btn-action {
+      padding: 8px 14px;
+      border-radius: 7px;
       font-size: 12px;
-      color: var(--text-muted);
-      text-decoration: none;
-      padding: 5px 10px;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
       border: 1px solid var(--border);
-      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
       transition: all 0.15s;
-      font-family: 'DM Mono', monospace;
-      letter-spacing: 0.04em;
+      font-weight: 500;
     }
 
-    .link-fonte:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-action:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* Formulários ocultos para POST */
-    #form-tjrj, #form-rfb { display: none; }
+    .btn-action.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
 
-    /* Rodapé */
+    .btn-action.primary:hover { background: var(--accent-hover); }
+
+    .btn-action.danger  { border-color: var(--found-border);    color: var(--found); }
+    .btn-action.success { border-color: var(--notfound-border); color: var(--notfound); }
+
+    .btn-action.danger:hover  { background: var(--found-bg); }
+    .btn-action.success:hover { background: var(--notfound-bg); }
+
+    /* Formulário oculto */
+    #form-tjrj { display: none; }
+
     footer {
-      margin-top: 36px;
+      margin-top: 32px;
       text-align: center;
       font-size: 11px;
       color: var(--text-subtle);
-      line-height: 1.8;
+      line-height: 1.9;
     }
+
+    footer a { color: var(--text-subtle); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
 
     @media (max-width: 440px) {
       .card { padding: 20px 16px; }
@@ -303,7 +301,7 @@
     <p class="tagline">Pesquisa em fontes públicas gratuitas</p>
   </header>
 
-  <!-- Formulário -->
+  <!-- Formulário de busca -->
   <div class="card">
     <div class="section-label">Dados para pesquisa</div>
 
@@ -336,11 +334,11 @@
       </div>
       <div class="row2">
         <div class="field">
-          <label>Nasc. <span style="font-weight:300;opacity:.6">(opcional)</span></label>
+          <label>Nascimento <span style="font-weight:300;opacity:.6">(opcional)</span></label>
           <input id="dataNasc" type="text" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskData(this)" />
         </div>
         <div class="field">
-          <label>Óbito <span style="font-weight:300;opacity:.6">(opcional)</span></label>
+          <label>Data óbito <span style="font-weight:300;opacity:.6">(opcional)</span></label>
           <input id="dataObito" type="text" placeholder="DD/MM/AAAA" maxlength="10" oninput="maskData(this)" />
         </div>
       </div>
@@ -350,78 +348,61 @@
       <button class="btn-clear" onclick="limpar()">Limpar</button>
       <button class="btn-search" onclick="consultar()">Pesquisar</button>
     </div>
-
-    <div class="info-box">
-      ⚠️ O portal TJRJ abrirá em uma nova aba com os dados já preenchidos. Veja o resultado lá e retorne para registrar aqui.
-    </div>
   </div>
 
-  <!-- Resultados -->
+  <!-- Resultado em etapas -->
   <div id="results">
-    <div class="card">
-      <div class="section-label">Resultado da consulta</div>
 
-      <!-- TJRJ -->
-      <div class="fonte-block">
-        <div class="fonte-header">
-          <span class="fonte-nome">TJRJ — Portal Extrajudicial</span>
-        </div>
-        <div id="res-tjrj" class="result-pill pill-pending">
-          <span class="pill-icon">○</span>
-          <div class="pill-text">
-            Aguardando verificação
-            <div class="pill-sub">Confira o resultado na aba aberta e clique abaixo</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-          <button class="link-fonte" onclick="marcaTJRJ('found')">✕ &nbsp;Encontrou óbito</button>
-          <button class="link-fonte" onclick="marcaTJRJ('notfound')">✓ &nbsp;Não encontrou</button>
-          <a id="link-tjrj-reabrir" class="link-fonte" href="#" target="_blank">↗ &nbsp;Reabrir portal</a>
+    <!-- Etapa 1: TJRJ -->
+    <div class="step" id="step-tjrj">
+      <div class="step-header">
+        <div class="step-num" id="num-tjrj">1</div>
+        <div class="step-source">
+          Portal Extrajudicial — TJRJ
+          <div class="step-source-sub">Atos registrados a partir de 01/08/2007</div>
         </div>
       </div>
-
-      <!-- Receita Federal -->
-      <div class="fonte-block">
-        <div class="fonte-header">
-          <span class="fonte-nome">Receita Federal — Situação Cadastral</span>
-        </div>
-        <div id="res-rfb" class="result-pill pill-pending">
-          <span class="pill-icon">○</span>
-          <div class="pill-text">
-            Aguardando verificação
-            <div class="pill-sub">Se CPF informado, acesse o link e verifique a situação cadastral</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px" id="rfb-actions"></div>
-      </div>
-
+      <div class="step-body" id="body-tjrj"></div>
     </div>
+
+    <!-- Etapa 2: RFB — só aparece após TJRJ ser respondido -->
+    <div class="step" id="step-rfb" style="display:none">
+      <div class="step-header">
+        <div class="step-num" id="num-rfb">2</div>
+        <div class="step-source">
+          Receita Federal — Situação Cadastral
+          <div class="step-source-sub">Indica "Titular Falecido" quando há óbito registrado</div>
+        </div>
+      </div>
+      <div class="step-body" id="body-rfb"></div>
+    </div>
+
   </div>
 
-  <!-- Formulário oculto TJRJ -->
-  <form id="form-tjrj" method="POST" action="https://www3.tjrj.jus.br/PORTALEXTRAJUDICIAL/CNO/" target="_blank">
+  <!-- Form oculto para POST ao TJRJ -->
+  <form id="form-tjrj" method="POST" action="https://www3.tjrj.jus.br/PORTALEXTRAJUDICIAL/CNO/" target="tjrj-popup">
     <input type="hidden" name="tipoAto" value="O" />
-    <input type="hidden" name="nome" id="f-nome" />
-    <input type="hidden" name="nomePai" id="f-pai" />
-    <input type="hidden" name="nomeMae" id="f-mae" />
+    <input type="hidden" name="nome"           id="f-nome" />
+    <input type="hidden" name="nomePai"        id="f-pai" />
+    <input type="hidden" name="nomeMae"        id="f-mae" />
     <input type="hidden" name="dataNascimento" id="f-nasc" />
-    <input type="hidden" name="dnv" value="" />
-    <input type="hidden" name="dataObito" id="f-obito" />
-    <input type="hidden" name="do" value="" />
-    <input type="hidden" name="cpf" id="f-cpf" />
+    <input type="hidden" name="dnv"            value="" />
+    <input type="hidden" name="dataObito"      id="f-obito" />
+    <input type="hidden" name="do"             value="" />
+    <input type="hidden" name="cpf"            id="f-cpf" />
   </form>
 
   <footer>
-    Atos registrados no TJRJ a partir de 01/08/2007 · Fontes públicas e gratuitas<br>
-    <a href="https://www3.tjrj.jus.br/PORTALEXTRAJUDICIAL/CNO/" target="_blank" style="color:var(--text-subtle);font-size:11px">TJRJ CNO</a>
+    Atos registrados no TJRJ a partir de 01/08/2007 &nbsp;·&nbsp; Fontes públicas gratuitas<br>
+    <a href="https://www3.tjrj.jus.br/PORTALEXTRAJUDICIAL/CNO/" target="_blank">TJRJ — Portal Extrajudicial</a>
     &nbsp;·&nbsp;
-    <a href="https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp" target="_blank" style="color:var(--text-subtle);font-size:11px">Receita Federal</a>
+    <a href="https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp" target="_blank">Receita Federal — CPF</a>
   </footer>
-</div>
 
+</div>
 <script>
   let currentTipo = 'cpf';
-  let lastCPF = '';
+  let cpfAtual = '';
 
   function setTipo(tipo, btn) {
     currentTipo = tipo;
@@ -448,39 +429,25 @@
 
   function limpar() {
     ['cpf','nome','nomePai','nomeMae','dataNasc','dataObito'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
+      const el = document.getElementById(id); if (el) el.value = '';
     });
     document.getElementById('results').style.display = 'none';
+    document.getElementById('step-rfb').style.display = 'none';
+    document.getElementById('num-tjrj').className = 'step-num';
+    document.getElementById('num-rfb').className = 'step-num';
   }
 
-  function setPill(id, type, title, sub) {
-    const map = {
+  function pill(type, title, sub) {
+    const cfg = {
       found:    { cls: 'pill-found',    icon: '✕' },
       notfound: { cls: 'pill-notfound', icon: '✓' },
-      pending:  { cls: 'pill-pending',  icon: '○' },
+      pending:  { cls: 'pill-pending',  icon: '…' },
     };
-    const m = map[type] || map.pending;
-    const el = document.getElementById(id);
-    el.className = 'result-pill ' + m.cls;
-    el.innerHTML = `<span class="pill-icon">${m.icon}</span>
-      <div class="pill-text">${title}<div class="pill-sub">${sub}</div></div>`;
-  }
-
-  function marcaTJRJ(type) {
-    if (type === 'found') {
-      setPill('res-tjrj', 'found', 'Óbito encontrado', 'Registro localizado no Portal Extrajudicial do TJRJ');
-    } else {
-      setPill('res-tjrj', 'notfound', 'Nenhum registro encontrado', 'Sem óbito registrado no TJRJ para os dados informados');
-    }
-  }
-
-  function marcaRFB(type) {
-    if (type === 'found') {
-      setPill('res-rfb', 'found', 'Titular Falecido', 'CPF com situação "Titular Falecido" na Receita Federal');
-    } else {
-      setPill('res-rfb', 'notfound', 'Situação regular', 'CPF sem indicação de óbito na Receita Federal');
-    }
+    const c = cfg[type] || cfg.pending;
+    return `<div class="pill ${c.cls}">
+      <span style="font-size:15px">${c.icon}</span>
+      <div><div>${title}</div><div class="pill-sub">${sub}</div></div>
+    </div>`;
   }
 
   function consultar() {
@@ -488,44 +455,90 @@
     const nome   = document.getElementById('nome').value.trim();
 
     if (currentTipo === 'cpf' && cpfRaw.length < 11) { alert('Digite um CPF válido com 11 dígitos.'); return; }
-    if (currentTipo === 'nome' && !nome) { alert('Digite ao menos o nome para pesquisar.'); return; }
+    if (currentTipo === 'nome' && !nome) { alert('Digite ao menos o nome.'); return; }
 
-    lastCPF = cpfRaw;
+    cpfAtual = cpfRaw;
+    const cpfFmt = cpfRaw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
 
-    // Preenche form oculto e submete (abre nova aba)
-    document.getElementById('f-cpf').value  = cpfRaw;
-    document.getElementById('f-nome').value = nome;
-    document.getElementById('f-pai').value  = document.getElementById('nomePai').value.trim();
-    document.getElementById('f-mae').value  = document.getElementById('nomeMae').value.trim();
-    document.getElementById('f-nasc').value = document.getElementById('dataNasc').value;
-    document.getElementById('f-obito').value= document.getElementById('dataObito').value;
+    // Preenche form oculto
+    document.getElementById('f-cpf').value   = cpfRaw;
+    document.getElementById('f-nome').value  = nome;
+    document.getElementById('f-pai').value   = document.getElementById('nomePai').value.trim();
+    document.getElementById('f-mae').value   = document.getElementById('nomeMae').value.trim();
+    document.getElementById('f-nasc').value  = document.getElementById('dataNasc').value;
+    document.getElementById('f-obito').value = document.getElementById('dataObito').value;
+
+    // Abre popup TJRJ
+    const popup = window.open('', 'tjrj-popup', 'width=1100,height=700,scrollbars=yes,resizable=yes');
     document.getElementById('form-tjrj').submit();
 
-    // Atualiza link reabrir
-    document.getElementById('link-tjrj-reabrir').onclick = function(e) {
-      e.preventDefault();
-      document.getElementById('form-tjrj').submit();
-    };
+    // Monta etapa 1
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('step-rfb').style.display = 'none';
+    document.getElementById('num-tjrj').className = 'step-num';
 
-    // Monta bloco RFB
-    const rfbActions = document.getElementById('rfb-actions');
-    if (cpfRaw.length === 11) {
-      const cpfFmt = cpfRaw.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
-      rfbActions.innerHTML = `
-        <button class="link-fonte" onclick="marcaRFB('found')">✕ &nbsp;Titular Falecido</button>
-        <button class="link-fonte" onclick="marcaRFB('notfound')">✓ &nbsp;Situação regular</button>
-        <a class="link-fonte" href="https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp" target="_blank">↗ &nbsp;Abrir Receita Federal</a>`;
-      setPill('res-rfb', 'pending', 'Verifique na Receita Federal', `CPF: ${cpfFmt} · Abra o link e verifique a situação cadastral`);
+    document.getElementById('body-tjrj').innerHTML =
+      pill('pending', 'Consulta aberta no portal do TJRJ', 'Veja o resultado na janela aberta e registre abaixo') +
+      `<div class="step-actions">
+        <button class="btn-action primary" onclick="abrirTJRJ()">↗ Abrir novamente</button>
+        <button class="btn-action danger"  onclick="registrarTJRJ('found')">✕&nbsp; Encontrou óbito</button>
+        <button class="btn-action success" onclick="registrarTJRJ('notfound')">✓&nbsp; Não encontrou</button>
+      </div>`;
+
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function abrirTJRJ() {
+    window.open('', 'tjrj-popup', 'width=1100,height=700,scrollbars=yes,resizable=yes');
+    document.getElementById('form-tjrj').submit();
+  }
+
+  function registrarTJRJ(resultado) {
+    const num = document.getElementById('num-tjrj');
+    num.textContent = '✓';
+    num.className = 'step-num done';
+
+    if (resultado === 'found') {
+      document.getElementById('body-tjrj').innerHTML =
+        pill('found', 'Óbito encontrado', 'Registro localizado no Portal Extrajudicial do TJRJ');
     } else {
-      rfbActions.innerHTML = '';
-      setPill('res-rfb', 'pending', 'CPF não informado', 'Informe um CPF para consultar na Receita Federal');
+      document.getElementById('body-tjrj').innerHTML =
+        pill('notfound', 'Nenhum registro encontrado', 'Sem óbito no TJRJ para os dados informados');
     }
 
-    // Reseta TJRJ pill
-    setPill('res-tjrj', 'pending', 'Portal TJRJ aberto em nova aba', 'Verifique o resultado e clique nos botões abaixo');
+    // Libera etapa 2 (RFB) só agora
+    const rfb = document.getElementById('step-rfb');
+    rfb.style.display = 'block';
 
-    document.getElementById('results').style.display = 'block';
-    setTimeout(() => document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    if (cpfAtual.length === 11) {
+      const cpfFmt = cpfAtual.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+      document.getElementById('body-rfb').innerHTML =
+        pill('pending', 'Acesse a Receita Federal e verifique a situação cadastral', `CPF: ${cpfFmt} — se aparecer "Titular Falecido", registre abaixo`) +
+        `<div class="step-actions">
+          <a class="btn-action primary" href="https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp" target="_blank">↗ Abrir Receita Federal</a>
+          <button class="btn-action danger"  onclick="registrarRFB('found')">✕&nbsp; Titular Falecido</button>
+          <button class="btn-action success" onclick="registrarRFB('notfound')">✓&nbsp; Situação regular</button>
+        </div>`;
+    } else {
+      document.getElementById('body-rfb').innerHTML =
+        pill('pending', 'CPF não informado', 'Informe um CPF para consultar na Receita Federal');
+    }
+
+    rfb.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function registrarRFB(resultado) {
+    const num = document.getElementById('num-rfb');
+    num.textContent = '✓';
+    num.className = 'step-num done';
+
+    if (resultado === 'found') {
+      document.getElementById('body-rfb').innerHTML =
+        pill('found', 'Titular Falecido', 'CPF com indicação de óbito na Receita Federal');
+    } else {
+      document.getElementById('body-rfb').innerHTML =
+        pill('notfound', 'Situação regular', 'CPF sem indicação de óbito na Receita Federal');
+    }
   }
 </script>
 </body>
