@@ -135,7 +135,10 @@ document.dispatchEvent(new Event('fb-ready'));
   .map-btn:hover { border-color:#2563eb; color:#2563eb; background:#dbeafe; }
 
   /* Map modal */
-  .map-modal { background:var(--surface); border-radius:16px; width:100%; max-width:560px; box-shadow:0 24px 60px rgba(0,0,0,0.25); animation:popIn 0.2s ease; overflow:hidden; }
+  .map-modal { background:var(--surface); border-radius:16px; width:100%; max-width:560px; box-shadow:0 24px 60px rgba(0,0,0,0.25); animation:popIn 0.2s ease; overflow:hidden; transition: max-width 0.2s, border-radius 0.2s; }
+  .map-modal.fullscreen { max-width:100%; border-radius:0; height:100vh; display:flex; flex-direction:column; }
+  .map-modal.fullscreen .map-frame-wrap { flex:1; height:auto; }
+  .map-modal.fullscreen #fullscreenMapBtn { opacity:0.7; }
   .map-modal-header { padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1.5px solid var(--border); }
   .map-modal-header h3 { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; }
   .map-modal-header .close-btn { font-size:1.1rem; }
@@ -526,12 +529,15 @@ document.dispatchEvent(new Event('fb-ready'));
 
 <!-- MAP MODAL -->
 <div class="overlay" id="mapOverlay">
-  <div class="map-modal">
+  <div class="map-modal" id="mapModalBox">
     <div class="map-modal-header">
       <h3 id="mapModalTitle">📍 Mapa</h3>
-      <button class="close-btn" id="closeMapBtn">✕</button>
+      <div style="display:flex;gap:0.4rem;align-items:center;">
+        <button class="close-btn" id="fullscreenMapBtn" title="Tela cheia">⛶</button>
+        <button class="close-btn" id="closeMapBtn" title="Fechar">✕</button>
+      </div>
     </div>
-    <div class="map-frame-wrap">
+    <div class="map-frame-wrap" id="mapFrameWrap">
       <iframe id="mapIframe" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
     <div class="map-modal-footer">
@@ -1148,10 +1154,24 @@ window.openMap = function(addr) {
 
 document.getElementById('closeMapBtn').addEventListener('click',()=>{
   document.getElementById('mapOverlay').classList.remove('open');
+  document.getElementById('mapModalBox').classList.remove('fullscreen');
+  document.getElementById('fullscreenMapBtn').textContent = '⛶';
   document.getElementById('mapIframe').src='';
 });
 document.getElementById('mapOverlay').addEventListener('click',e=>{
-  if(e.target.id==='mapOverlay'){ document.getElementById('mapOverlay').classList.remove('open'); document.getElementById('mapIframe').src=''; }
+  if(e.target.id==='mapOverlay'){
+    document.getElementById('mapOverlay').classList.remove('open');
+    document.getElementById('mapModalBox').classList.remove('fullscreen');
+    document.getElementById('fullscreenMapBtn').textContent = '⛶';
+    document.getElementById('mapIframe').src='';
+  }
+});
+document.getElementById('fullscreenMapBtn').addEventListener('click',()=>{
+  const modal = document.getElementById('mapModalBox');
+  const btn   = document.getElementById('fullscreenMapBtn');
+  const isFs  = modal.classList.toggle('fullscreen');
+  btn.textContent = isFs ? '⊡' : '⛶';
+  btn.title = isFs ? 'Sair da tela cheia' : 'Tela cheia';
 });
 
 document.getElementById('mapSearch').addEventListener('input',e=>renderMapTable(e.target.value));
