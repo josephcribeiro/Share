@@ -130,6 +130,22 @@ document.dispatchEvent(new Event('fb-ready'));
   .empty h3 { font-family:'Syne',sans-serif; font-weight:700; margin-bottom:0.3rem; }
   .empty p { font-size:0.85rem; font-weight:300; }
 
+  /* Map button on card */
+  .map-btn { background:none; border:1.5px solid var(--border); border-radius:8px; padding:0.22rem 0.55rem; font-size:0.75rem; cursor:pointer; color:var(--ink-soft); transition:all 0.15s; white-space:nowrap; display:flex; align-items:center; gap:0.25rem; }
+  .map-btn:hover { border-color:#2563eb; color:#2563eb; background:#dbeafe; }
+
+  /* Map modal */
+  .map-modal { background:var(--surface); border-radius:16px; width:100%; max-width:560px; box-shadow:0 24px 60px rgba(0,0,0,0.25); animation:popIn 0.2s ease; overflow:hidden; }
+  .map-modal-header { padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1.5px solid var(--border); }
+  .map-modal-header h3 { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; }
+  .map-modal-header .close-btn { font-size:1.1rem; }
+  .map-frame-wrap { position:relative; width:100%; height:320px; background:#e5e7eb; }
+  .map-frame-wrap iframe { width:100%; height:100%; border:none; display:block; }
+  .map-modal-footer { padding:0.75rem 1.25rem; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; border-top:1.5px solid var(--border); }
+  .map-modal-footer a { font-size:0.82rem; color:var(--accent); text-decoration:none; font-weight:500; }
+  .map-modal-footer a:hover { text-decoration:underline; }
+  .map-custom-note { font-size:0.75rem; color:var(--ink-soft); font-style:italic; }
+
   /* MODALS */
   .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); z-index:100; align-items:center; justify-content:center; padding:1rem; }
   .overlay.open { display:flex; }
@@ -349,6 +365,7 @@ document.dispatchEvent(new Event('fb-ready'));
       <div class="stab" data-tab="records">📋 Endereços</div>
       <div class="stab" data-tab="agents">👤 Agentes</div>
       <div class="stab" data-tab="teams">🏷️ Equipes</div>
+      <div class="stab" data-tab="maplabels">🗺️ Mapa</div>
       <div class="stab" data-tab="security">🔑 Senha</div>
     </div>
 
@@ -448,6 +465,20 @@ document.dispatchEvent(new Event('fb-ready'));
       <div id="teamsView"></div>
     </div>
 
+    <!-- MAP LABELS -->
+    <div class="stab-body" id="tab-maplabels">
+      <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.25rem;">Se o mapa de alguma rua estiver mostrando o local errado, corrija aqui informando o endereço exato para busca.</p>
+      <div class="rec-toolbar">
+        <input class="rec-search-input" type="text" id="mapSearch" placeholder="Filtrar endereços…">
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="rec-table">
+          <thead><tr><th>Endereço</th><th>Busca no mapa</th><th></th></tr></thead>
+          <tbody id="mapBody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- SECURITY -->
     <div class="stab-body" id="tab-security">
       <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.5rem;">A senha fica salva neste dispositivo. Altere aqui sempre que precisar — sem editar código.</p>
@@ -489,6 +520,23 @@ document.dispatchEvent(new Event('fb-ready'));
     <div class="form-actions">
       <button class="btn-primary" id="saveRecBtn">Salvar</button>
       <button class="btn-sec" id="cancelFormBtn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAP MODAL -->
+<div class="overlay" id="mapOverlay">
+  <div class="map-modal">
+    <div class="map-modal-header">
+      <h3 id="mapModalTitle">📍 Mapa</h3>
+      <button class="close-btn" id="closeMapBtn">✕</button>
+    </div>
+    <div class="map-frame-wrap">
+      <iframe id="mapIframe" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <div class="map-modal-footer">
+      <a id="mapExternalLink" href="#" target="_blank">🗺️ Abrir no Google Maps</a>
+      <span class="map-custom-note" id="mapCustomNote"></span>
     </div>
   </div>
 </div>
@@ -745,6 +793,7 @@ async function fbSaveAll() {
     colors:  loadColorsLocal(),
     logo:    localStorage.getItem(LOGO_KEY) || '',
     pwd:     localStorage.getItem(PWD_KEY)  || '',
+    mapOverrides: getMapOverrides(),
     updatedAt: Date.now()
   };
   try {
@@ -795,6 +844,11 @@ function applyRemoteData(remote) {
   // Senha
   if (remote.pwd) {
     localStorage.setItem(PWD_KEY, remote.pwd);
+  }
+
+  // Map overrides
+  if (remote.mapOverrides) {
+    localStorage.setItem(MAP_KEY, JSON.stringify(remote.mapOverrides));
   }
 }
 
@@ -857,7 +911,11 @@ function render(){
   res.innerHTML=filtered.map(([a,e,m,ag])=>`
     <div class="card">
       <div class="card-address">${hl(a,raw)}</div>
-      <div class="card-meta"><span class="tag ${eqClass(e)}">${hl(e,raw)}</span><span class="agent-chip">${hl(ag,raw)}</span></div>
+      <div class="card-meta">
+        <span class="tag ${eqClass(e)}">${hl(e,raw)}</span>
+        <span class="agent-chip">${hl(ag,raw)}</span>
+        <button class="map-btn" onclick="openMap(${JSON.stringify(a)})">📍 Ver mapa</button>
+      </div>
       <div class="micro-badge">${hl(m,raw)}</div>
     </div>`).join('');
 }
@@ -910,6 +968,7 @@ document.querySelectorAll('.stab').forEach(tab=>tab.addEventListener('click',()=
   if(tab.dataset.tab==='records') renderRecTable(document.getElementById('recSearch').value);
   if(tab.dataset.tab==='teams') renderTeamsView();
   if(tab.dataset.tab==='agents') renderAgentsTab();
+  if(tab.dataset.tab==='maplabels') renderMapTable(document.getElementById('mapSearch').value);
 }));
 
 // ── colors ──
@@ -1061,6 +1120,67 @@ document.getElementById('savePwdBtn').addEventListener('click',()=>{
   document.getElementById('pwdConfirm').value='';
   toast('✅ Senha alterada com sucesso!');
 });
+// ── map ──
+const MAP_KEY  = 'microareas_mapoverrides_v1';
+const MAP_CITY = 'Campo Grande, Rio de Janeiro, RJ';
+
+function getMapOverrides(){ const s=localStorage.getItem(MAP_KEY); if(s) try{return JSON.parse(s);}catch(e){} return {}; }
+function saveMapOverrides(o){ localStorage.setItem(MAP_KEY,JSON.stringify(o)); fbSaveAll(); }
+function mapQueryFor(addr){ const ov=getMapOverrides(); return ov[addr]||`${addr}, ${MAP_CITY}`; }
+
+window.openMap = function(addr) {
+  const query   = mapQueryFor(addr);
+  const encoded = encodeURIComponent(query);
+  const isCustom = !!getMapOverrides()[addr];
+  document.getElementById('mapModalTitle').textContent = '📍 ' + addr;
+  document.getElementById('mapIframe').src = `https://maps.google.com/maps?q=${encoded}&output=embed&z=16`;
+  document.getElementById('mapExternalLink').href = `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+  document.getElementById('mapCustomNote').textContent = isCustom ? '✏️ Endereço personalizado' : '';
+  document.getElementById('mapOverlay').classList.add('open');
+};
+
+document.getElementById('closeMapBtn').addEventListener('click',()=>{
+  document.getElementById('mapOverlay').classList.remove('open');
+  document.getElementById('mapIframe').src='';
+});
+document.getElementById('mapOverlay').addEventListener('click',e=>{
+  if(e.target.id==='mapOverlay'){ document.getElementById('mapOverlay').classList.remove('open'); document.getElementById('mapIframe').src=''; }
+});
+
+document.getElementById('mapSearch').addEventListener('input',e=>renderMapTable(e.target.value));
+
+function renderMapTable(q){
+  const n=norm(q||'');
+  const overrides=getMapOverrides();
+  const rows=[...new Set(DATA.filter(([a])=>!n||norm(a).includes(n)).map(([a])=>a))];
+  document.getElementById('mapBody').innerHTML=rows.map(addr=>{
+    const custom=overrides[addr]||'';
+    return `<tr>
+      <td style="font-size:0.82rem;font-weight:500;max-width:160px;word-break:break-word;">${addr}</td>
+      <td><input type="text" value="${custom.replace(/"/g,'&quot;')}" placeholder="${addr}, ${MAP_CITY}"
+        style="width:100%;padding:0.4rem 0.6rem;border:1.5px solid var(--border);border-radius:6px;font-size:0.8rem;font-family:'DM Sans',sans-serif;outline:none;"
+        onchange="saveMapOverride(${JSON.stringify(addr)},this.value)"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'"></td>
+      <td><button class="btn-del" title="Restaurar padrão" onclick="clearMapOverride(${JSON.stringify(addr)})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+window.saveMapOverride=function(addr,val){
+  const o=getMapOverrides();
+  if(val.trim()) o[addr]=val.trim(); else delete o[addr];
+  saveMapOverrides(o);
+  toast('✅ Endereço do mapa salvo!');
+};
+window.clearMapOverride=function(addr){
+  const o=getMapOverrides();
+  delete o[addr];
+  saveMapOverrides(o);
+  renderMapTable(document.getElementById('mapSearch').value);
+  toast('🔄 Endereço restaurado ao padrão');
+};
+
 function renderTeamsView(){
   const eq={};
   DATA.forEach(([,e,,ag])=>{ if(!eq[e]) eq[e]={}; eq[e][ag]=(eq[e][ag]||0)+1; });
