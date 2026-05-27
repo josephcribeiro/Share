@@ -901,12 +901,12 @@ function applyColors(c){
   r.setProperty('--tag-vilamaria-ink',  contrastColor(c.vilamaria));
 }
 
-// Retorna #000000 ou #ffffff dependendo da luminosidade do fundo
+// Retorna cor de texto sutil derivada do fundo (escura ou clara, nunca puro preto/branco)
 function contrastColor(hex){
   const [r,g,b] = hexToRgb(hex);
-  // fórmula WCAG de luminância relativa
   const lum = 0.299*r + 0.587*g + 0.114*b;
-  return lum > 145 ? '#1a1a1a' : '#ffffff';
+  // fundo claro → texto escuro derivado; fundo escuro → texto claro derivado
+  return lum > 145 ? blendColor(hex, -0.55) : blendColor(hex, 0.65);
 }
 
 // Escurece (fator negativo) ou clareia (fator positivo) uma cor hex
