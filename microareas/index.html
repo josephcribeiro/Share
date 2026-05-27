@@ -500,6 +500,10 @@ document.dispatchEvent(new Event('fb-ready'));
       <div class="btn-row">
         <button class="btn-primary" id="savePwdBtn">Salvar nova senha</button>
       </div>
+      <div style="margin-top:1.5rem;padding-top:1.25rem;border-top:1.5px solid var(--border);">
+        <p style="font-size:0.85rem;color:var(--ink-soft);margin-bottom:0.75rem;">Sessão ativa neste dispositivo. Clique abaixo para encerrar e exigir senha novamente.</p>
+        <button class="btn-sec" id="logoutBtn" style="color:#dc2626;border-color:#fecaca;">🚪 Encerrar sessão (logoff)</button>
+      </div>
     </div>
 
   </div>
@@ -983,7 +987,15 @@ document.querySelectorAll('.pill').forEach(p=>p.addEventListener('click',()=>{
 }));
 
 // ── login ──
+const SESSION_KEY = 'microareas_admin_session';
+function isLoggedIn(){ return localStorage.getItem(SESSION_KEY) === 'true'; }
+function setLoggedIn(v){ v ? localStorage.setItem(SESSION_KEY,'true') : localStorage.removeItem(SESSION_KEY); }
+
 document.getElementById('openSettingsBtn').addEventListener('click',()=>{
+  if(isLoggedIn()){
+    openSettings();
+    return;
+  }
   document.getElementById('pwdInput').value='';
   document.getElementById('loginError').style.display='none';
   document.getElementById('loginOverlay').classList.add('open');
@@ -995,6 +1007,7 @@ document.getElementById('pwdInput').addEventListener('keydown',e=>{ if(e.key==='
 
 function tryLogin(){
   if(document.getElementById('pwdInput').value===getPassword()){
+    setLoggedIn(true);
     document.getElementById('loginOverlay').classList.remove('open');
     openSettings();
   } else {
@@ -1100,7 +1113,11 @@ document.getElementById('saveRecBtn').addEventListener('click',()=>{
   document.getElementById('formOverlay').classList.remove('open');
 });
 
-// ── agents tab ──
+document.getElementById('logoutBtn').addEventListener('click',()=>{
+  setLoggedIn(false);
+  document.getElementById('settingsOverlay').classList.remove('open');
+  toast('👋 Sessão encerrada');
+});
 function renderAgentsTab() {
   const counts = {};
   DATA.forEach(([,,,ag]) => { counts[ag] = (counts[ag]||0) + 1; });
