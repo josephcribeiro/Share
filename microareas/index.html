@@ -360,7 +360,10 @@ document.dispatchEvent(new Event('fb-ready'));
   <div class="settings-panel">
     <div class="settings-hdr">
       <h2>⚙️ Configurações</h2>
-      <button class="close-btn" id="closeSettingsBtn">✕</button>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button class="btn-sec" id="logoutBtnHeader" style="padding:0.35rem 0.75rem;font-size:0.78rem;color:#dc2626;border-color:#fecaca;border-radius:8px;display:none;">🚪 Sair</button>
+        <button class="close-btn" id="closeSettingsBtn">✕</button>
+      </div>
     </div>
     <div class="stabs">
       <div class="stab active" data-tab="colors">🎨 Cores</div>
@@ -1020,6 +1023,7 @@ function tryLogin(){
 // ── settings ──
 function openSettings(){
   document.getElementById('settingsOverlay').classList.add('open');
+  document.getElementById('logoutBtnHeader').style.display = isLoggedIn() ? 'block' : 'none';
   syncColorInputs();
   renderRecTable('');
   renderTeamsView();
@@ -1114,6 +1118,11 @@ document.getElementById('saveRecBtn').addEventListener('click',()=>{
 });
 
 document.getElementById('logoutBtn').addEventListener('click',()=>{
+  setLoggedIn(false);
+  document.getElementById('settingsOverlay').classList.remove('open');
+  toast('👋 Sessão encerrada');
+});
+document.getElementById('logoutBtnHeader').addEventListener('click',()=>{
   setLoggedIn(false);
   document.getElementById('settingsOverlay').classList.remove('open');
   toast('👋 Sessão encerrada');
