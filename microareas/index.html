@@ -966,7 +966,7 @@ function render(){
   res.innerHTML=filtered.map(([a,e,m,ag])=>`
     <div class="card">
       <div class="card-address">
-        ${hl(a,raw)}
+        <span>${hl(a,raw)}</span>
         <button class="map-btn" data-addr="${a.replace(/"/g,'&quot;')}">📍</button>
       </div>
       <div class="card-meta">
