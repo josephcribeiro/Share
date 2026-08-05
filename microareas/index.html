@@ -1142,7 +1142,6 @@ function render(){
     btn.addEventListener('click', e=>{ e.stopPropagation(); openMap(btn.dataset.addr); });
   });
 }
-}
 
 document.getElementById('search').addEventListener('input',render);
 document.getElementById('clearBtn').addEventListener('click',()=>{ document.getElementById('search').value=''; render(); document.getElementById('search').focus(); });
