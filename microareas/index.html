@@ -122,8 +122,11 @@ document.dispatchEvent(new Event('fb-ready'));
   .tag-equipe-DALTRO     { background:var(--tag-daltro);     color:var(--tag-daltro-ink); }
   .tag-equipe-GUAMIRANGA { background:var(--tag-guamiranga); color:var(--tag-guamiranga-ink); }
   .tag-equipe-VILAMARIA  { background:var(--tag-vilamaria);  color:var(--tag-vilamaria-ink); }
-  .agent-chip { font-size:0.8rem; font-weight:500; color:var(--ink-soft); display:flex; align-items:center; gap:0.3rem; }
-  .agent-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .agent-chip { font-size:0.8rem; font-weight:500; color:var(--ink-soft); display:flex; align-items:center; gap:0.3rem; word-break:break-word; }
+  .agent-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+  .cep-badge { font-size:0.68rem; font-weight:500; color:var(--ink-soft); letter-spacing:0.02em; white-space:nowrap; }
+  .cep-loading { color:transparent; }
+  .cep-found { color:var(--ink-soft); }
   .micro-badge { font-size:0.72rem; color:#888; font-weight:400; margin-left:auto; white-space:nowrap; }
   .empty { text-align:center; padding:3rem 1rem; color:var(--ink-soft); }
   .empty-icon { font-size:2.5rem; margin-bottom:0.75rem; }
@@ -938,14 +941,52 @@ function rgbToHex(r,g,b){
 // ── helpers ──
 function norm(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
 function hl(text,q){
-  if(!q) return text;
-  const n=norm(q),nt=norm(text);
+  if(!q) return escHtml(text);
+  const n=norm(q), nt=norm(text);
   let r='',i=0;
-  while(i<text.length){ const idx=nt.indexOf(n,i); if(idx===-1){r+=text.slice(i);break;} r+=text.slice(i,idx)+'<mark>'+text.slice(idx,idx+n.length)+'</mark>'; i=idx+n.length; }
+  while(i<text.length){
+    const idx=nt.indexOf(n,i);
+    if(idx===-1){r+=escHtml(text.slice(i));break;}
+    r+=escHtml(text.slice(i,idx))+'<mark>'+escHtml(text.slice(idx,idx+n.length))+'</mark>';
+    i=idx+n.length;
+  }
   return r;
 }
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function eqClass(eq){ return 'tag-equipe-'+eq.replace(/\s/g,'').toUpperCase(); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2300); }
+
+// ── CEP cache ──
+const CEP_KEY = 'microareas_cep_v1';
+function getCepCache(){ const s=localStorage.getItem(CEP_KEY); if(s) try{return JSON.parse(s);}catch(e){} return {}; }
+function saveCepCache(o){ localStorage.setItem(CEP_KEY,JSON.stringify(o)); }
+
+async function buscarCEP(rua){
+  const cache = getCepCache();
+  if(cache[rua] !== undefined) return cache[rua]; // já buscou antes
+
+  // extrai só o nome da rua sem números/complementos
+  const nomeLimpo = rua
+    .replace(/,?\s*\d[\d\s,.\-\/]*/g,'')  // remove números
+    .replace(/\(.*?\)/g,'')               // remove parênteses
+    .replace(/estr\.\s*/i,'Estrada ')
+    .trim();
+
+  try {
+    const url = `https://viacep.com.br/ws/RJ/Rio%20de%20Janeiro/Campo%20Grande/${encodeURIComponent(nomeLimpo)}/json/`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    if(Array.isArray(data) && data.length > 0){
+      const cep = data[0].cep;
+      cache[rua] = cep;
+      saveCepCache(cache);
+      return cep;
+    }
+  } catch(e){}
+  cache[rua] = ''; // não encontrado — guarda vazio para não buscar de novo
+  saveCepCache(cache);
+  return '';
+}
 
 // ── search & render ──
 let activeEquipe='';
@@ -963,22 +1004,40 @@ function render(){
     :`<strong>${DATA.length}</strong> registros no total`;
   const res=document.getElementById('results');
   if(!tot){ res.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>Nenhum resultado</h3><p>Tente outros termos.</p></div>`; return; }
-  res.innerHTML=filtered.map(([a,e,m,ag])=>`
+
+  const cache = getCepCache();
+
+  res.innerHTML=filtered.map(([a,e,m,ag])=>{
+    const cep = cache[a];
+    const cepHtml = cep
+      ? `<span class="cep-badge">CEP ${cep}</span>`
+      : `<span class="cep-badge cep-loading" data-addr="${a.replace(/"/g,'&quot;')}">...</span>`;
+    return `
     <div class="card">
       <div class="card-address">
-        <span>${hl(a,raw)}</span>
-        <button class="map-btn" data-addr="${a.replace(/"/g,'&quot;')}">📍</button>
+        ${hl(a,raw)}
+        <button class="map-btn" data-addr="${a.replace(/"/g,'&quot;')}">📍 ${cepHtml}</button>
       </div>
       <div class="card-meta">
         <span class="tag ${eqClass(e)}">${hl(e,raw)}</span>
         <span class="agent-chip">${hl(ag,raw)}</span>
       </div>
       <div class="micro-badge">${hl(m,raw)}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   // delegação de evento nos botões de mapa
-  document.getElementById('results').querySelectorAll('.map-btn').forEach(btn=>{
+  res.querySelectorAll('.map-btn').forEach(btn=>{
     btn.addEventListener('click', e=>{ e.stopPropagation(); openMap(btn.dataset.addr); });
+  });
+
+  // busca CEPs pendentes em background
+  res.querySelectorAll('.cep-loading').forEach(async el=>{
+    const addr = el.dataset.addr;
+    const cep  = await buscarCEP(addr);
+    el.textContent = cep ? `CEP ${cep}` : '';
+    el.classList.remove('cep-loading');
+    if(cep) el.classList.add('cep-found');
   });
 }
 
