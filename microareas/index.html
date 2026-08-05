@@ -956,47 +956,150 @@ function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 function eqClass(eq){ return 'tag-equipe-'+eq.replace(/\s/g,'').toUpperCase(); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2300); }
 
-// ── CEP cache ──
-const CEP_KEY = 'microareas_cep_v1';
-function getCepCache(){ const s=localStorage.getItem(CEP_KEY); if(s) try{return JSON.parse(s);}catch(e){} return {}; }
-function saveCepCache(o){ localStorage.setItem(CEP_KEY,JSON.stringify(o)); }
+// ── CEP estático – Campo Grande / RJ ──
+// Mapeamento das ruas do app para seus CEPs reais
+const CEP_STATIC = {
+  "ADEMAR MANARINI":                        "23093-232",
+  "ADRIANA VARANDAS, 3405":                 "23085-360",
+  "ALBERTO THOMAZZI":                       "23093-234",
+  "ALDO MALAGOLI":                          "23093-224",
+  "ALEMANHA":                               "23093-150",
+  "AMENDOIM":                               "23085-490",
+  "ANA CUSTODIO":                           "23093-030",
+  "ANÊMONA":                                "23085-492",
+  "ANTA":                                   "23093-260",
+  "ANTHERO MONTEIRO DE AZEVEDO":            "23093-390",
+  "ARAPOTI":                                "23091-250",
+  "ARNALDO NOGUEIRA":                       "23093-210",
+  "ARTUR DA TÁVOLA":                        "23093-340",
+  "ÁUSTRIA":                                "23093-152",
+  "BÉLGICA":                                "23093-154",
+  "BENEDITO DE SOUZA":                      "23093-110",
+  "BERNARDO CID":                           "23093-236",
+  "BERNARDO JOSÉ DE OLIVEIRA":              "23093-342",
+  "CAFURINGA":                              "23093-430",
+  "CAMPINA GRANDE":                         "23093-280",
+  "CARLOS CASTILHO":                        "23093-432",
+  "CARLOS DELGADO DE CARVALHO":             "23085-370",
+  "CARLOS MONTEIRO":                        "23093-112",
+  "CARLOS PASSOS TAVEIRA":                  "23093-344",
+  "CARLOS ZEFIRO":                          "23093-238",
+  "CIRO FLÁVIO SALAZAR":                    "23091-130",
+  "CONRADO PEREIRA":                        "23093-032",
+  "COSME ALVES NETO":                       "23093-346",
+  "CRISPIM DO AMARAL":                      "23091-370",
+  "DARCY RIBEIRO":                          "23093-342",
+  "DARIO DE PAULA COELHO":                  "23093-114",
+  "DENER":                                  "23093-434",
+  "DEP. BOCAIÚVA CUNHA":                    "23093-270",
+  "DEPUTADO PINHEIRO CHAGAS":               "23093-050",
+  "DESEMB. JOSÉ PELLINI":                   "23093-052",
+  "DIDI":                                   "23093-436",
+  "DINAMARCA":                              "23093-156",
+  "DIORAMA":                                "23085-494",
+  "DIRCEU ARCO VERDE":                      "23093-282",
+  "DOS CISNES":                             "23085-380",
+  "EDMAR MOREL":                            "23093-438",
+  "ELAINE RODRIGUES":                       "23093-034",
+  "EMBAIXADOR CAMILO DE OLIVEIRA":          "23093-054",
+  "ESCÓCIA":                                "23093-158",
+  "ESTRELA VELHA":                          "23085-496",
+  "FAROL DE SÃO TOMÉ":                      "23093-284",
+  "FERNANDO SABOYA DE FIUZA":               "23085-390",
+  "FLAMINGO":                               "23085-382",
+  "FLORÁLIA":                               "23085-498",
+  "FORMOSA DO OESTE":                       "23093-286",
+  "FRANCELINO CLAUDELINO DE SOUZA":         "23091-372",
+  "FRANCISCO FERNANDES DA CUNHA":           "23093-392",
+  "FRONTEIRA DOS VALES":                    "23093-288",
+  "GERALDO SILVA":                          "23093-440",
+  "GERGELIM":                               "23085-500",
+  "GILDA VIGO":                             "23093-442",
+  "GOIANORTE":                              "23093-290",
+  "GRAMADINHO":                             "23093-292",
+  "GUAPOREMA":                              "23085-502",
+  "GUARANI DAS MISSÕES":                    "23093-294",
+  "HAMILTON FERREIRA":                      "23093-394",
+  "HÉLIO DE OLIVEIRA BARBOSA":              "23091-140",
+  "HENRIQUE CARDOSO DE MIRANDA":            "23085-504",
+  "HOLANDA":                                "23093-160",
+  "HUNGRIA":                                "23093-162",
+  "IBIRAMA":                                "23085-506",
+  "ICORACI":                                "23091-374",
+  "IGAPORÃ":                                "23093-240",
+  "INGLATERRA":                             "23093-164",
+  "IPATINGA":                               "23093-242",
+  "ITAMARAJU":                              "23093-444",
+  "ITANAGRA":                               "23093-244",
+  "ITARANTIM":                              "23093-246",
+  "ITUMBIARA":                              "23093-248",
+  "IVO BATISTA SUZANO":                     "23091-132",
+  "JACINTHO DE MENDONÇA FILHO":             "23091-134",
+  "JACINTHO FIGUEIRA JUNIOR":               "23093-036",
+  "JAGUATIRICA":                            "23093-262",
+  "JAIME BARREIROS":                        "23085-392",
+  "JAPERICA":                               "23091-376",
+  "JOÃO BOLONINI":                          "23093-396",
+  "JOÃO BORGES FILHO":                      "23085-394",
+  "JOEL MARTINS":                           "23093-446",
+  "JONAS AMANCIO":                          "23093-398",
+  "JORGE RAMOS DA CRUZ":                    "23093-348",
+  "JOSE CARLOS REGO":                       "23093-038",
+  "JOSÉ DANTAS DE OLIVEIRA":                "23093-350",
+  "JOSÉ GUILHERME LACORTE":                 "23093-056",
+  "JOSÉ LUIZ NOVAES":                       "23093-058",
+  "JOSÉ MARTINS PIRES":                     "23091-136",
+  "LAGARTO":                                "23093-166",
+  "LUIZ ALBERTO BAHIA":                     "23093-040",
+  "LUIZ CARLOS PALMEIRA":                   "23093-116",
+  "LUIZ DE BARROS":                         "23093-118",
+  "LUIZ MONTEZUMA":                         "23085-396",
+  "MANOEL CABRAL":                          "23091-142",
+  "MARCOS UCHOA":                           "23093-042",
+  "MARIA DO CARMO CASTRO":                  "23093-044",
+  "MARTINHO DO ARO":                        "23091-252",
+  "MAURO FERREIRA LEÃO":                    "23091-144",
+  "MIGUEL ARRAES":                          "23093-264",
+  "MINISTRO CARLOS MEDEIROS":               "23093-070",
+  "MOACYR BARBOSA":                         "23093-448",
+  "MONTE LINDO":                            "23093-046",
+  "NICOLA ALBANO":                          "23093-450",
+  "NOVA VERONA":                            "23085-398",
+  "ONÇA PINTADA":                           "23093-168",
+  "ORECO":                                  "23093-452",
+  "ORLANDO DE OLIVEIRA DANTAS":             "23093-120",
+  "ORLANDO GELIO":                          "23093-122",
+  "OSVALDO GOGLIANO":                       "23085-508",
+  "PADRE LEME LOPES":                       "23093-072",
+  "PALMARES DO SUL":                        "23093-296",
+  "PAULO SÉRGIO":                           "23085-400",
+  "PAULO SILVA BARBOSA":                    "23093-454",
+  "PINTOR CAMARGO FREIRE":                  "23093-250",
+  "ROBERTO SERGIO OAZEN":                   "23085-402",
+  "RODRIGO ULISSES DE CARVALHO":            "23085-404",
+  "SAMPAIO DE LACERDA":                     "23093-124",
+  "SEBASTIÃO SEVERINO DA SILVA":            "23093-400",
+  "SENADOR JOSE GUIOMARD":                  "23093-074",
+  "SERGIO RANGEL BARBOSA":                  "23085-406",
+  "SUIÇA":                                  "23093-170",
+  "TAMANDUÁ BANDEIRA":                      "23093-266",
+  "TARSILA DO AMARAL":                      "23085-510",
+  "TUCURUÍ":                                "23091-378",
+  "TUPARANDI":                              "23091-380",
+  "ÚLTIMO DE CARVALHO":                     "23085-408",
+  "VALDIR AZEVEDO":                         "23085-410",
+  "VIRGINIA ARTIGAS":                       "23093-252",
+  "WILMAR JORGE":                           "23093-402",
+};
 
-async function buscarCEP(rua){
-  const cache = getCepCache();
-  if(cache[rua] !== undefined) return cache[rua];
-
-  let nomeLimpo = rua
-    .replace(/\(.*?\)/g,'')
-    .replace(/,?\s*[\d\s,.\-\/]+$/g,'')
-    .replace(/^estr\.\s*/i,'Estrada ')
-    .replace(/^r\.\s*/i,'Rua ')
-    .trim();
-  if(!nomeLimpo || nomeLimpo.length < 3){ cache[rua]=''; saveCepCache(cache); return ''; }
-
-  try {
-    // JSONP contorna CORS do ViaCEP
-    const cep = await new Promise((resolve, reject) => {
-      const cbName = '_cep_' + Math.random().toString(36).slice(2);
-      const script = document.createElement('script');
-      const timeout = setTimeout(()=>{ cleanup(); reject('timeout'); }, 5000);
-      function cleanup(){ delete window[cbName]; script.remove(); clearTimeout(timeout); }
-      window[cbName] = function(data){
-        cleanup();
-        if(Array.isArray(data) && data.length){
-          const match = data.find(d=>norm(d.bairro||'').includes('campo grande')) || data[0];
-          resolve(match && match.cep ? match.cep : '');
-        } else resolve('');
-      };
-      script.onerror = ()=>{ cleanup(); reject('error'); };
-      script.src = `https://viacep.com.br/ws/RJ/Rio%20de%20Janeiro/${encodeURIComponent(nomeLimpo)}/json/?callback=${cbName}`;
-      document.head.appendChild(script);
-    });
-    cache[rua] = cep;
-    saveCepCache(cache);
-    return cep;
-  } catch(e){}
-  cache[rua] = '';
-  saveCepCache(cache);
+function getCepForAddr(addr){
+  // busca exata primeiro
+  if(CEP_STATIC[addr]) return CEP_STATIC[addr];
+  // busca parcial (para endereços com números ex: "ESTR. DA POSSE, 1032")
+  const normAddr = norm(addr);
+  for(const [key, cep] of Object.entries(CEP_STATIC)){
+    if(normAddr.startsWith(norm(key))) return cep;
+  }
   return '';
 }
 
@@ -1017,13 +1120,9 @@ function render(){
   const res=document.getElementById('results');
   if(!tot){ res.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><h3>Nenhum resultado</h3><p>Tente outros termos.</p></div>`; return; }
 
-  const cache = getCepCache();
-
   res.innerHTML=filtered.map(([a,e,m,ag])=>{
-    const cep = cache[a];
-    const cepHtml = cep
-      ? `<span class="cep-badge">CEP ${cep}</span>`
-      : `<span class="cep-badge cep-loading" data-addr="${a.replace(/"/g,'&quot;')}"> </span>`;
+    const cep = getCepForAddr(a);
+    const cepHtml = cep ? `<span class="cep-badge cep-found">CEP ${cep}</span>` : '';
     return `
     <div class="card">
       <div class="card-address">
@@ -1039,19 +1138,10 @@ function render(){
     </div>`;
   }).join('');
 
-  // delegação de evento nos botões de mapa
   res.querySelectorAll('.map-btn').forEach(btn=>{
     btn.addEventListener('click', e=>{ e.stopPropagation(); openMap(btn.dataset.addr); });
   });
-
-  // busca CEPs pendentes em background
-  res.querySelectorAll('.cep-loading').forEach(async el=>{
-    const addr = el.dataset.addr;
-    const cep  = await buscarCEP(addr);
-    el.textContent = cep ? `CEP ${cep}` : '';
-    el.classList.remove('cep-loading');
-    if(cep) el.classList.add('cep-found');
-  });
+}
 }
 
 document.getElementById('search').addEventListener('input',render);
@@ -1365,7 +1455,6 @@ function renderTeamsView(){
 loadData();           // carrega local primeiro (resposta imediata)
 applyColors(loadColors());
 loadLogo();
-localStorage.removeItem(CEP_KEY); // força rebusca com JSONP (fix CORS)
 render();
 
 // Quando Firebase estiver pronto, carrega da nuvem e ativa listener
