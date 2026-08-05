@@ -124,9 +124,9 @@ document.dispatchEvent(new Event('fb-ready'));
   .tag-equipe-VILAMARIA  { background:var(--tag-vilamaria);  color:var(--tag-vilamaria-ink); }
   .agent-chip { font-size:0.8rem; font-weight:500; color:var(--ink-soft); display:flex; align-items:center; gap:0.3rem; word-break:break-word; }
   .agent-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
-  .cep-badge { font-size:0.68rem; font-weight:500; color:var(--ink-soft); letter-spacing:0.02em; white-space:nowrap; }
-  .cep-loading { color:transparent; }
-  .cep-found { color:var(--ink-soft); }
+  .cep-badge { font-size:0.68rem; font-weight:500; color:var(--ink-soft); letter-spacing:0.02em; white-space:nowrap; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:0.1rem 0.45rem; }
+  .cep-loading { opacity:0; pointer-events:none; }
+  .cep-found { opacity:1; }
   .micro-badge { font-size:0.72rem; color:#888; font-weight:400; margin-left:auto; white-space:nowrap; }
   .empty { text-align:center; padding:3rem 1rem; color:var(--ink-soft); }
   .empty-icon { font-size:2.5rem; margin-bottom:0.75rem; }
@@ -963,27 +963,32 @@ function saveCepCache(o){ localStorage.setItem(CEP_KEY,JSON.stringify(o)); }
 
 async function buscarCEP(rua){
   const cache = getCepCache();
-  if(cache[rua] !== undefined) return cache[rua]; // já buscou antes
+  if(cache[rua] !== undefined) return cache[rua];
 
-  // extrai só o nome da rua sem números/complementos
-  const nomeLimpo = rua
-    .replace(/,?\s*\d[\d\s,.\-\/]*/g,'')  // remove números
-    .replace(/\(.*?\)/g,'')               // remove parênteses
-    .replace(/estr\.\s*/i,'Estrada ')
+  // Limpa o nome: remove números, parênteses, abreviações
+  let nomeLimpo = rua
+    .replace(/\(.*?\)/g,'')
+    .replace(/,?\s*[\d\s,.\-\/]+$/g,'')
+    .replace(/^estr\.\s*/i,'Estrada ')
+    .replace(/^r\.\s*/i,'Rua ')
     .trim();
 
   try {
-    const url = `https://viacep.com.br/ws/RJ/Rio%20de%20Janeiro/Campo%20Grande/${encodeURIComponent(nomeLimpo)}/json/`;
+    // ViaCEP: /ws/{UF}/{Cidade}/{Logradouro}/json/
+    const url = `https://viacep.com.br/ws/RJ/Rio%20de%20Janeiro/${encodeURIComponent(nomeLimpo)}/json/`;
     const res  = await fetch(url);
     const data = await res.json();
-    if(Array.isArray(data) && data.length > 0){
-      const cep = data[0].cep;
-      cache[rua] = cep;
+    // filtra resultados do bairro Campo Grande
+    const match = Array.isArray(data)
+      ? data.find(d => norm(d.bairro||'').includes('campo grande')) || data[0]
+      : null;
+    if(match && match.cep){
+      cache[rua] = match.cep;
       saveCepCache(cache);
-      return cep;
+      return match.cep;
     }
   } catch(e){}
-  cache[rua] = ''; // não encontrado — guarda vazio para não buscar de novo
+  cache[rua] = '';
   saveCepCache(cache);
   return '';
 }
@@ -1011,12 +1016,13 @@ function render(){
     const cep = cache[a];
     const cepHtml = cep
       ? `<span class="cep-badge">CEP ${cep}</span>`
-      : `<span class="cep-badge cep-loading" data-addr="${a.replace(/"/g,'&quot;')}">...</span>`;
+      : `<span class="cep-badge cep-loading" data-addr="${a.replace(/"/g,'&quot;')}"> </span>`;
     return `
     <div class="card">
       <div class="card-address">
         ${hl(a,raw)}
-        <button class="map-btn" data-addr="${a.replace(/"/g,'&quot;')}">📍 ${cepHtml}</button>
+        <button class="map-btn" data-addr="${a.replace(/"/g,'&quot;')}">📍</button>
+        ${cepHtml}
       </div>
       <div class="card-meta">
         <span class="tag ${eqClass(e)}">${hl(e,raw)}</span>
