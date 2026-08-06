@@ -1460,6 +1460,7 @@ loadData();           // carrega local primeiro (resposta imediata)
 applyColors(loadColors());
 loadLogo();
 render();
+setTimeout(()=>document.getElementById('search').focus(), 300);
 
 // Quando Firebase estiver pronto, carrega da nuvem e ativa listener
 async function initFirebase() {
