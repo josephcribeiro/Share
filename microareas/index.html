@@ -122,9 +122,9 @@ document.dispatchEvent(new Event('fb-ready'));
   .tag-equipe-DALTRO     { background:var(--tag-daltro);     color:var(--tag-daltro-ink); }
   .tag-equipe-GUAMIRANGA { background:var(--tag-guamiranga); color:var(--tag-guamiranga-ink); }
   .tag-equipe-VILAMARIA  { background:var(--tag-vilamaria);  color:var(--tag-vilamaria-ink); }
-  .agent-chip { font-size:0.8rem; font-weight:500; color:var(--ink-soft); display:inline-flex; align-items:baseline; gap:0.3rem; word-break:normal; white-space:normal; }
-  .agent-chip::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; vertical-align:middle; position:relative; top:-1px; }
-  .agent-chip mark { background:#fde68a; color:inherit; border-radius:2px; padding:0; margin:0; display:inline; font-style:normal; }
+  .agent-chip { font-size:0.8rem; font-weight:500; color:var(--ink-soft); display:inline-flex; align-items:center; gap:0.3rem; }
+  .agent-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+  .agent-chip mark { background:#fde68a; color:inherit; border-radius:2px; padding:0; margin:0; }
   .cep-badge { font-size:0.78rem; font-weight:600; color:var(--ink-soft); letter-spacing:0.04em; white-space:nowrap; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:0.12rem 0.5rem; font-family: 'Courier New', Courier, monospace; }
   .cep-loading { opacity:0; pointer-events:none; }
   .cep-found { opacity:1; }
@@ -1137,7 +1137,7 @@ function render(){
       </div>
       <div class="card-meta">
         <span class="tag ${eqClass(e)}">${hl(e,raw)}</span>
-        <span class="agent-chip">${hl(ag,raw)}</span>
+        <span class="agent-chip"><span class="agent-dot"></span>${hl(ag,raw)}</span>
       </div>
       <div class="micro-badge">${hl(m,raw)}</div>
     </div>`;
