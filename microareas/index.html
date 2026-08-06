@@ -942,13 +942,17 @@ function rgbToHex(r,g,b){
 function norm(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
 function hl(text,q){
   if(!q) return escHtml(text);
-  const n=norm(q), nt=norm(text);
-  let r='',i=0;
-  while(i<text.length){
+  const n=norm(q);
+  const nt=norm(text);
+  // Mapeia cada posição do texto normalizado para o texto original
+  // (acentos: 'Ê' normaliza para 'E' — mesma posição, mesmo índice)
+  let r='', i=0;
+  while(i<=nt.length){
     const idx=nt.indexOf(n,i);
-    if(idx===-1){r+=escHtml(text.slice(i));break;}
+    if(idx===-1){ r+=escHtml(text.slice(i)); break; }
     r+=escHtml(text.slice(i,idx))+'<mark>'+escHtml(text.slice(idx,idx+n.length))+'</mark>';
     i=idx+n.length;
+    if(n.length===0) break; // evita loop infinito
   }
   return r;
 }
